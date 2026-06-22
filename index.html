@@ -1,0 +1,2954 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>세미나 관리 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --navy:      #0f1f3d;
+    --navy2:     #1a2f52;
+    --navy3:     #243868;
+    --accent:    #4e7ef7;
+    --accent2:   #3a66e0;
+    --bg:        #ffffff;
+    --bg2:       #f5f6fa;
+    --bg3:       #eef0f6;
+    --text:      #1a1f36;
+    --text2:     #5a6378;
+    --text3:     #9aa0b4;
+    --border:    #e4e6f0;
+    --border2:   #d0d3e4;
+    --primary:       #4e7ef7;
+    --primary-dark:  #3a66e0;
+    --primary-light: #eef2ff;
+    --primary-mid:   #a8bef9;
+    --green:         #12b76a;
+    --green-light:   #e6f9f0;
+    --amber:         #f79009;
+    --amber-light:   #fff5e6;
+    --coral:         #f04438;
+    --coral-light:   #fef0ef;
+    --purple:        #7c3aed;
+    --purple-light:  #f0ebff;
+    --radius:    8px;
+    --radius-lg: 12px;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg3);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* 네이비 헤더 */
+  .site-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy3) 100%);
+    padding: 0;
+    margin-bottom: 0;
+    box-shadow: 0 2px 12px rgba(15,31,61,0.18);
+  }
+  .header-inner {
+    max-width: 1100px; margin: 0 auto;
+    padding: 1.5rem 2rem 0;
+  }
+  .header-brand {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+  }
+  .header-brand .brand-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: .12em;
+    color: rgba(255,255,255,0.5); text-transform: uppercase;
+  }
+  .header-title {
+    font-size: 22px; font-weight: 700; color: #fff;
+    letter-spacing: -0.02em; margin-bottom: 4px;
+  }
+  .header-sub {
+    font-size: 12px; color: rgba(255,255,255,0.55); margin-bottom: 1.25rem;
+  }
+  .header-actions {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    padding-bottom: 1rem;
+  }
+  .btn-header {
+    font-size: 12px; font-weight: 600; padding: 7px 14px;
+    border-radius: var(--radius); cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    transition: all .15s;
+  }
+  .btn-header-outline {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.85);
+  }
+  .btn-header-outline:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.45); }
+  .btn-header-primary {
+    background: var(--accent); border: none; color: #fff;
+  }
+  .btn-header-primary:hover { background: var(--accent2); }
+
+  /* 탭 네비 — 헤더 하단 */
+  .tab-nav {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; gap: 0; overflow-x: auto;
+  }
+  .tab-nav::-webkit-scrollbar { display: none; }
+  .tab {
+    font-size: 13px; font-weight: 500; padding: 12px 20px;
+    color: rgba(255,255,255,0.55); cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap; transition: all .15s;
+    display: flex; align-items: center; gap: 6px;
+    background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: rgba(255,255,255,0.85); }
+  .tab.on { color: #fff; border-bottom-color: var(--accent); font-weight: 600; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 1.75rem 2rem; }
+
+  /* 버튼 */
+  .btn-primary {
+    background: var(--accent); color: #fff; border: none;
+    border-radius: var(--radius); padding: 8px 16px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  button.outline {
+    font-size: 12px; padding: 7px 13px; border-radius: var(--radius);
+    border: 1px solid var(--border2); background: var(--bg);
+    color: var(--text2); cursor: pointer; font-weight: 500;
+    transition: border-color .15s, color .15s;
+  }
+  button.outline:hover { border-color: var(--primary-mid); color: var(--primary-dark); }
+  button.small {
+    font-size: 11px; padding: 3px 9px; border-radius: 6px;
+    border: 1px solid var(--border2); background: var(--bg);
+    color: var(--text2); cursor: pointer;
+    transition: border-color .15s;
+  }
+  button.small:hover { border-color: var(--primary-mid); color: var(--primary-dark); }
+
+  /* 메트릭 카드 */
+  .metric-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 1.25rem; }
+  @media (max-width: 600px) { .metric-grid { grid-template-columns: repeat(2,1fr); } .chart-row { grid-template-columns: 1fr; } }
+  .metric {
+    background: var(--bg); border-radius: var(--radius-lg);
+    padding: 18px 20px; border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    box-shadow: 0 1px 4px rgba(15,31,61,0.06);
+  }
+  .metric:nth-child(2) { border-top-color: var(--green); }
+  .metric:nth-child(3) { border-top-color: var(--amber); }
+  .metric:nth-child(4) { border-top-color: var(--purple); }
+  .metric-label { font-size: 11px; color: var(--text2); margin-bottom: 8px; font-weight: 600; letter-spacing: .03em; }
+  .metric-value { font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.03em; }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* 카드 */
+  .card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1rem;
+    box-shadow: 0 1px 4px rgba(15,31,61,0.05);
+  }
+  .sec-label {
+    font-size: 12px; font-weight: 700; color: var(--text);
+    letter-spacing: .04em; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .sec-label::before {
+    content: ''; display: inline-block; width: 3px; height: 14px;
+    background: var(--accent); border-radius: 2px; flex-shrink: 0;
+  }
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+
+  /* 테이블 */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+  th {
+    text-align: left; font-weight: 600; color: var(--text2);
+    font-size: 11px; padding: 9px 12px; border-bottom: 2px solid var(--border);
+    letter-spacing: .03em; background: var(--bg2);
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg2); }
+
+  /* 배지 */
+  .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+  .b-hot  { background: var(--coral-light);   color: var(--coral); }
+  .b-warm { background: var(--amber-light);   color: var(--amber); }
+  .b-cat  { background: var(--primary-light); color: var(--primary-dark); }
+  .b-new  { background: var(--green-light);   color: var(--green); }
+
+  /* 필터 */
+  .filter-row {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    margin-bottom: 1rem; padding: 10px 14px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .filter-row label { font-size: 12px; color: var(--text2); font-weight: 600; }
+  select, input[type=text], input[type=tel], input[type=date], input[type=number] {
+    font-size: 13px; padding: 7px 10px; border-radius: var(--radius);
+    border: 1px solid var(--border2); background: var(--bg); color: var(--text);
+    transition: border-color .15s;
+  }
+  select:focus, input:focus { outline: none; border-color: var(--accent); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .form-group input, .form-group select { width: 100%; }
+
+  /* 기타 */
+  .section-divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+  .toast {
+    display: none; background: var(--green-light); color: var(--green);
+    border-radius: var(--radius); padding: 10px 14px; font-size: 13px;
+    margin-bottom: 10px; border: 1px solid #86efcb; font-weight: 500;
+  }
+  .rate-high { color: var(--green);   font-weight: 700; }
+  .rate-mid  { color: var(--amber);   font-weight: 700; }
+  .rate-low  { color: var(--coral);   font-weight: 700; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text2); }
+  .legend-sq { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text3); font-size: 13px; }
+  .empty-state i { font-size: 36px; display: block; margin-bottom: 10px; color: var(--primary-mid); }
+
+  /* 달력 */
+  .cal-day {
+    height: 100px; border-radius: 8px; padding: 5px 6px;
+    border: 1px solid transparent; cursor: pointer; transition: background .12s;
+    position: relative; overflow: hidden;
+  }
+  .cal-day:hover { background: var(--bg2); }
+  .cal-day.today { border-color: var(--accent); background: var(--primary-light); }
+  .cal-day.other-month .cal-num { color: var(--text3); }
+  .cal-num { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 3px; }
+  .cal-day.today .cal-num { color: var(--accent2); }
+  .cal-event {
+    font-size: 10px; border-radius: 4px; padding: 2px 6px;
+    margin-bottom: 2px; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; font-weight: 600; cursor: pointer;
+    display: block; max-width: 100%;
+  }
+  .ev-seminar  { background: #dbeafe; color: #1e40af; }
+  .ev-rehearse { background: #e0e7ff; color: #3730a3; }
+  .ev-prep     { background: #fef9c3; color: #854d0e; }
+  .ev-msg      { background: #dcfce7; color: #166534; }
+  .ev-etc      { background: #f1f5f9; color: #475569; }
+  .ev-open     { background: #fce7f3; color: #9d174d; }
+  .checklist-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type=checkbox] { width:15px; height:15px; accent-color: var(--accent); flex-shrink:0; cursor:pointer; }
+  .checklist-item .ci-label { font-size: 13px; flex: 1; color: var(--text); }
+  .checklist-item .ci-label.done { text-decoration: line-through; color: var(--text3); }
+  .checklist-item .ci-date { font-size: 11px; color: var(--text3); }
+  .checklist-item .ci-del { font-size: 11px; color: var(--text3); cursor: pointer; padding: 2px 6px; }
+  .checklist-item .ci-del:hover { color: var(--coral); }
+  .msg-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .msg-item:last-child { border-bottom: none; }
+  .msg-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; font-weight: 600; flex-shrink:0; margin-top:1px; }
+  .msg-info { flex:1; }
+  .msg-title { font-size: 13px; font-weight: 500; color: var(--text); }
+  .msg-date  { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .msg-del { font-size: 11px; color: var(--text3); cursor: pointer; padding: 2px 6px; }
+  .msg-del:hover { color: var(--coral); }
+
+  /* 구 nav-row 호환 (탭으로 이동됨) */
+  .nav-row { display: none; }
+</style>
+</head>
+<body>
+
+<!-- 네이비 헤더 -->
+<div class="site-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <span class="brand-tag">세미나 관리 시스템</span>
+    </div>
+    <div class="header-title">세미나 관리 대시보드</div>
+    <div class="header-sub">신청자 현황 · 참여자 분석 · 일정 관리 &nbsp;|&nbsp; 최종 업데이트: <span id="lastUpdatedLabel" style="color:rgba(255,255,255,0.8)">—</span></div>
+    <div class="header-actions">
+      <button class="btn-header btn-header-outline" id="sheetsBtnTop" onclick="openSheetsModal()" style="display:flex;align-items:center;gap:5px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect x="3" y="3" width="18" height="18" rx="3" fill="#34A853"/><path d="M7 8h10M7 12h10M7 16h6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span id="sheetsBtnLabel">Sheets 연동</span>
+      </button>
+    </div>
+  </div>
+  <!-- 탭 네비 -->
+  <div class="tab-nav" id="tabNav"></div>
+</div>
+
+<div class="container">
+
+  <!-- Sheets 연동 모달 -->
+  <div id="sheetsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center">
+    <div style="background:var(--bg);border-radius:var(--radius-lg);padding:1.75rem;width:min(520px,94vw);box-shadow:0 12px 40px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="4" fill="#34A853"/><path d="M6 7h12M6 12h12M6 17h7" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        <span style="font-size:16px;font-weight:600;color:var(--text)">Google Sheets 연동</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.7">
+        Google Sheets를 DB로 사용합니다. 담당자가 시트에 데이터를 입력하면 대시보드에 자동으로 반영돼요.
+      </p>
+
+      <!-- 단계 안내 -->
+      <div style="background:var(--bg2);border-radius:var(--radius);padding:14px 16px;margin-bottom:1.25rem;font-size:12px;line-height:1.9;color:var(--text2)">
+        <div style="font-weight:600;color:var(--text);margin-bottom:6px">📋 시트 준비 방법 (처음 한 번만)</div>
+        <div>① Google Sheets에서 <strong>세미나 시트</strong>와 <strong>참여자 시트</strong>를 만들어요</div>
+        <div>② 공유 → <strong>"링크가 있는 모든 사용자 → 뷰어"</strong> 로 설정</div>
+        <div>③ 아래에 각 시트의 URL을 붙여넣고 저장</div>
+        <div style="margin-top:8px;padding:8px 10px;background:var(--bg);border-radius:6px;font-family:monospace;font-size:11px;color:var(--text)">
+          <div style="color:var(--text2);margin-bottom:4px">📅 세미나 시트 헤더 (1행):</div>
+          세미나명 · 날짜 · 종류 · 신청자수 · 최대참석자 · 참석률 · 강사 / 학원 · 영상 · 교안 · 메모
+        </div>
+        <div style="margin-top:6px;padding:8px 10px;background:var(--bg);border-radius:6px;font-family:monospace;font-size:11px;color:var(--text)">
+          <div style="color:var(--text2);margin-bottom:4px">👤 참여자 시트 헤더 (1행) — 1행 = 세미나 참여 1건:</div>
+          날짜 · 회원ID · 이름 · 연락처 · 세미나명
+          <div style="color:var(--text3);margin-top:4px;font-size:10px">중복 참여 시 여러 행으로 입력 → 자동으로 참여 횟수 집계</div>
+        </div>
+        <div style="margin-top:6px;padding:8px 10px;background:var(--bg);border-radius:6px;font-family:monospace;font-size:11px;color:var(--text)">
+          <div style="color:var(--text2);margin-bottom:4px">📅 일정 시트 헤더 (1행) — 선택:</div>
+          날짜 · 제목 · 종류 · 메모
+          <div style="color:var(--text3);margin-top:4px;font-size:10px">종류: 세미나 / SB전달 / 카톡/문자 발송 / 리허설 / 모집페이지 오픈 / 기타</div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px">
+        <span class="form-label" style="display:flex;align-items:center;justify-content:space-between">
+          <span style="display:flex;align-items:center;gap:5px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="4" fill="#34A853"/><path d="M6 7h12M6 12h12M6 17h7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+            세미나 시트 URL <span style="font-weight:400;color:var(--text3)">(탭별로 여러 개 추가 가능)</span>
+          </span>
+          <button type="button" class="outline" onclick="addSemUrlRow()" style="font-size:11px;padding:3px 10px">+ 탭 추가</button>
+        </span>
+        <div id="semUrlList" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:1.25rem">
+        <span class="form-label" style="display:flex;align-items:center;justify-content:space-between">
+          <span style="display:flex;align-items:center;gap:5px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="4" fill="#34A853"/><path d="M6 7h12M6 12h12M6 17h7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+            참여자 시트 URL <span style="font-weight:400;color:var(--text3)">(탭별로 여러 개 추가 가능)</span>
+          </span>
+          <button type="button" class="outline" onclick="addMemUrlRow()" style="font-size:11px;padding:3px 10px">+ 탭 추가</button>
+        </span>
+        <div id="memUrlList" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:1.25rem">
+        <span class="form-label" style="display:flex;align-items:center;gap:5px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="4" fill="#34A853"/><path d="M6 7h12M6 12h12M6 17h7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+          일정 시트 URL <span style="font-weight:400;color:var(--text3)">(선택)</span>
+        </span>
+        <input type="text" id="sheetsScheduleUrl" placeholder="https://docs.google.com/spreadsheets/d/..." style="width:100%;font-size:12px">
+      </div>
+
+      <div id="sheetsStatus" style="display:none;border-radius:var(--radius);padding:10px 14px;font-size:12px;margin-bottom:12px;line-height:1.6"></div>
+
+      <!-- 관리자 비밀번호 (숨김 - 단축키로만 접근) -->
+      <div id="adminPwSection" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px">🔒 관리자 비밀번호</div>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <input type="password" id="adminPwInput" placeholder="비밀번호 설정 (미입력 시 잠금 해제)" style="flex:1;font-size:12px">
+          <button type="button" class="outline" onclick="saveAdminPw()" style="font-size:12px;white-space:nowrap">저장</button>
+        </div>
+        <input type="text" id="adminPwHintInput" placeholder="힌트 (예: 내 생일 앞 4자리)" style="width:100%;font-size:12px;margin-bottom:6px">
+        <div id="pwStatus" style="font-size:11px;color:var(--text3)"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+        <button class="outline" onclick="closeSheetsModal()">닫기</button>
+        <button class="outline" onclick="clearSheetsConfig()" style="color:var(--coral)">연동 해제</button>
+        <button class="btn-primary" onclick="saveSheetsConfig()" id="sheetsSaveBtn">저장 후 불러오기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 링크 팝업 모달 -->
+  <div id="linkModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300;align-items:center;justify-content:center" onclick="closeLinkModal()">
+    <div style="background:var(--bg);border-radius:var(--radius-lg);padding:1.5rem;width:min(480px,92vw);box-shadow:0 12px 40px rgba(0,0,0,0.2)" onclick="event.stopPropagation()">
+      <div id="linkModalTitle" style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px"></div>
+      <div id="linkModalContent" style="font-size:13px;color:var(--text2);word-break:break-all;background:var(--bg2);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;line-height:1.7"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="outline" onclick="closeLinkModal()">닫기</button>
+        <button class="outline" id="linkModalCopyBtn" onclick="copyLinkFromModal()">복사</button>
+        <button class="btn-primary" id="linkModalOpenBtn" onclick="openLinkFromModal()">링크 열기</button>
+      </div>
+    </div>
+  </div>
+  <div id="pwModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center">
+    <div style="background:var(--bg);border-radius:var(--radius-lg);padding:1.75rem;width:min(360px,90vw);box-shadow:0 12px 40px rgba(0,0,0,0.2)">
+      <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px">🔒 관리자 인증</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">데이터 입력 탭은 관리자만 접근할 수 있어요.</p>
+      <input type="password" id="pwModalInput" placeholder="비밀번호 입력" style="width:100%;font-size:13px;margin-bottom:8px" onkeydown="if(event.key==='Enter')checkAdminPw()">
+      <div id="pwModalError" style="font-size:12px;color:var(--coral);min-height:18px;margin-bottom:6px"></div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px">
+        비밀번호를 잊으셨나요?
+        <span style="color:var(--accent);cursor:pointer;text-decoration:underline" onclick="showPwHint()">힌트 보기</span>
+      </div>
+      <div id="pwHintBox" style="display:none;background:var(--bg2);border-radius:var(--radius);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="outline" onclick="document.getElementById('pwModal').style.display='none'">취소</button>
+        <button class="btn-primary" onclick="checkAdminPw()">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav on" onclick="showSection('dash',this)"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> 대시보드</button>
+    <button class="nav" onclick="showSection('seminars',this)"><i class="ti ti-calendar" aria-hidden="true"></i> 세미나 목록</button>
+    <button class="nav" onclick="showSection('members',this)"><i class="ti ti-users" aria-hidden="true"></i> 참여자 관리</button>
+    <button class="nav" onclick="showSection('add',this)"><i class="ti ti-pencil" aria-hidden="true"></i> 데이터 입력</button>
+    <button class="nav" onclick="showSection('schedule',this)"><i class="ti ti-calendar-event" aria-hidden="true"></i> 일정 달력</button>
+  </div>
+
+  <!-- 대시보드 -->
+  <div id="sec-dash">
+    <div class="filter-row">
+      <label>연도</label>
+      <select id="selYear" onchange="applyFilters()"><option value="all" selected>전체</option></select>
+      <label style="margin-left:6px">월</label>
+      <select id="selMonth" onchange="applyFilters()">
+        <option value="all" selected>전체</option>
+        <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+        <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+        <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+        <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+      </select>
+      <label style="margin-left:6px">종류</label>
+      <select id="selCat" onchange="applyFilters()"><option value="all">전체</option></select>
+    </div>
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label"><i class="ti ti-calendar" aria-hidden="true"></i> 총 세미나</div><div class="metric-value" id="mTotal">0회</div><div class="metric-sub" id="mSub1">아직 데이터 없음</div></div>
+      <div class="metric">
+        <div class="metric-label"><i class="ti ti-users" aria-hidden="true"></i> 신청자</div>
+        <div style="display:flex;gap:0;margin-top:4px">
+          <div style="flex:1;padding-right:10px;border-right:1px solid var(--border)">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px">중복 포함</div>
+            <div class="metric-value" id="mApplyRaw" style="font-size:18px">0명</div>
+          </div>
+          <div style="flex:1;padding-left:10px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px">중복 제거</div>
+            <div class="metric-value" id="mApply" style="font-size:18px;color:var(--primary-dark)">0명</div>
+          </div>
+        </div>
+        <div class="metric-sub" id="mSub2" style="margin-top:4px"></div>
+      </div>
+      <div class="metric"><div class="metric-label"><i class="ti ti-user-check" aria-hidden="true"></i> 누적 최대 참석자</div><div class="metric-value" id="mAttend">0명</div><div class="metric-sub" id="mSub3"></div></div>
+      <div class="metric"><div class="metric-label"><i class="ti ti-star" aria-hidden="true"></i> 핵심 유저</div><div class="metric-value" id="mHeavy">0명</div><div class="metric-sub">3회 이상</div></div>
+    </div>
+    <div class="chart-row">
+      <div class="card">
+        <div class="sec-label">월별 신청자 추이</div>
+        <div style="position:relative;height:160px"><canvas id="cMonth" role="img" aria-label="월별 신청자 수 추이">월별 추이</canvas></div>
+      </div>
+      <div class="card">
+        <div class="sec-label">종류별 분포</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px" id="catLegend"></div>
+        <div style="position:relative;height:130px"><canvas id="cCat" role="img" aria-label="세미나 종류별 참여 분포">종류별 분포</canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="sec-label" style="margin:0">최근 세미나</div>
+        <span style="font-size:11px;color:var(--text3)">최신순 · 최근 100개 표시</span>
+      </div>
+      <div id="recentWrap">
+        <div class="empty-state"><i class="ti ti-calendar-off"></i>아직 등록된 세미나가 없어요<br><br><button class="btn-primary" onclick="showSection('add')" style="font-size:12px;padding:6px 14px">첫 세미나 등록하기</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 세미나 목록 -->
+  <div id="sec-seminars" style="display:none">
+    <div class="filter-row">
+      <label>종류</label>
+      <select id="sCat" onchange="renderSeminarTable()"><option value="all">전체</option></select>
+      <label style="margin-left:6px">연도</label>
+      <select id="sYear" onchange="renderSeminarTable()"><option value="all">전체</option></select>
+    </div>
+    <div class="card">
+      <div id="seminarWrap">
+        <div class="empty-state"><i class="ti ti-calendar-off"></i>등록된 세미나가 없어요</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 참여자 관리 -->
+  <div id="sec-members" style="display:none">
+    <div class="filter-row">
+      <label>등급</label>
+      <select id="mTier" onchange="renderMemberTable()">
+        <option value="all">전체</option>
+        <option value="hot">핵심 (5회↑)</option>
+        <option value="warm">단골 (3~4회)</option>
+        <option value="new">신규 (1~2회)</option>
+      </select>
+      <label style="margin-left:6px">관심분야</label>
+      <select id="mInt" onchange="renderMemberTable()"><option value="all">전체</option></select>
+      <button class="outline" onclick="clearAllMembers()" id="clearMembersBtn" style="margin-left:auto;color:var(--coral);font-size:12px;display:none">
+        <i class="ti ti-trash" aria-hidden="true"></i> 참여자 전체 삭제
+      </button>
+    </div>
+    <div class="card">
+      <div id="memberWrap">
+        <div class="empty-state"><i class="ti ti-users-off"></i>등록된 참여자가 없어요</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 데이터 입력 -->
+  <div id="sec-add" style="display:none">
+    <div id="toast-ok" class="toast"></div>
+
+    <!-- 세미나 데이터 -->
+    <div class="card" style="border:1px solid #b8e8d4;background:var(--green-light);margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="4" fill="#34A853"/><path d="M6 7h12M6 12h12M6 17h7" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        <span style="font-size:13px;font-weight:600;color:var(--green)">세미나 데이터는 Google Sheets에서 관리해요</span>
+      </div>
+      <p style="font-size:12px;color:#2d7a56;line-height:1.7;margin-bottom:6px">
+        세미나 시트에 데이터를 입력하면 <strong>세미나 목록</strong>·<strong>대시보드</strong>에 자동 반영돼요.
+      </p>
+      <div style="padding:8px 10px;background:rgba(255,255,255,0.5);border-radius:6px;font-family:monospace;font-size:11px;color:#1a5c3a;margin-bottom:12px">
+        세미나명 · 날짜 · 종류 · 신청자수 · 최대참석자 · 참석률 · 강사 / 학원 · 영상 · 교안 · 메모
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="outline" onclick="openSheetsModal()" style="font-size:12px;display:flex;align-items:center;gap:5px;border-color:#34A853;color:var(--green)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="4" fill="#34A853"/><path d="M6 7h12M6 12h12M6 17h7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Sheets 연동 설정
+        </button>
+        <button class="outline" onclick="loadFromSheets(true)" style="font-size:12px;color:var(--green)">새로고침</button>
+      </div>
+    </div>
+
+    <!-- 참여자 데이터 -->
+    <div class="card" style="border:1px solid #b8e8d4;background:var(--green-light);margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="4" fill="#34A853"/><path d="M6 7h12M6 12h12M6 17h7" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        <span style="font-size:13px;font-weight:600;color:var(--green)">참여자 데이터는 Google Sheets에서 관리해요</span>
+      </div>
+      <p style="font-size:12px;color:#2d7a56;line-height:1.7;margin-bottom:6px">
+        참여자 시트에 데이터를 입력하면 <strong>참여자 관리</strong> 탭에 자동 반영돼요.
+      </p>
+      <div style="padding:8px 10px;background:rgba(255,255,255,0.5);border-radius:6px;font-family:monospace;font-size:11px;color:#1a5c3a;margin-bottom:12px">
+        날짜 · 회원ID · 이름 · 연락처 · 세미나명
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="outline" onclick="openSheetsModal()" style="font-size:12px;display:flex;align-items:center;gap:5px;border-color:#34A853;color:var(--green)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="4" fill="#34A853"/><path d="M6 7h12M6 12h12M6 17h7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Sheets 연동 설정
+        </button>
+        <button class="outline" onclick="loadFromSheets(true)" style="font-size:12px;color:var(--green)">새로고침</button>
+      </div>
+    </div>
+
+    <!-- 일정 데이터 -->
+    <div class="card" style="border:1px solid #b8e8d4;background:var(--green-light);margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="4" fill="#34A853"/><path d="M6 7h12M6 12h12M6 17h7" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        <span style="font-size:13px;font-weight:600;color:var(--green)">일정 데이터는 Google Sheets에서 관리해요</span>
+      </div>
+      <p style="font-size:12px;color:#2d7a56;line-height:1.7;margin-bottom:6px">
+        일정 시트에 데이터를 입력하면 <strong>일정 달력</strong> 탭에 자동 반영돼요.<br>
+        종류는 <strong>세미나 / SB전달 / 카톡·문자 발송 / 리허설 / 모집페이지 오픈 / 기타</strong> 중 하나로 입력하세요.
+      </p>
+      <div style="padding:8px 10px;background:rgba(255,255,255,0.5);border-radius:6px;font-family:monospace;font-size:11px;color:#1a5c3a;margin-bottom:12px">
+        날짜 · 제목 · 종류 · 메모
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="outline" onclick="openSheetsModal()" style="font-size:12px;display:flex;align-items:center;gap:5px;border-color:#34A853;color:var(--green)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="4" fill="#34A853"/><path d="M6 7h12M6 12h12M6 17h7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Sheets 연동 설정
+        </button>
+        <button class="outline" onclick="loadScheduleFromSheets(true)" style="font-size:12px;color:var(--green)">새로고침</button>
+      </div>
+    </div>
+
+    <!-- 데이터 백업 -->
+    <div class="card" style="background:var(--bg2)">
+      <div class="sec-label" style="margin-bottom:8px">데이터 백업</div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.7">
+        브라우저 캐시가 지워지면 데이터가 초기화될 수 있어요.<br>
+        <strong>내보내기</strong>로 백업하고, 필요시 <strong>불러오기</strong>로 복원하세요.
+      </p>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="outline" onclick="exportData()"><i class="ti ti-download" aria-hidden="true"></i> 데이터 내보내기 (.json)</button>
+        <label class="outline" style="cursor:pointer"><i class="ti ti-upload" aria-hidden="true"></i> 데이터 불러오기<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+      </div>
+    </div>
+  </div>
+    <!-- 일정 달력 -->
+  <div id="sec-schedule" style="display:none">
+
+    <!-- 달력 헤더 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <button class="outline" onclick="calPrev()"><i class="ti ti-chevron-left" aria-hidden="true"></i></button>
+      <span id="calTitle" style="font-size:16px;font-weight:600;color:var(--text)"></span>
+      <button class="outline" onclick="calNext()"><i class="ti ti-chevron-right" aria-hidden="true"></i></button>
+    </div>
+
+    <!-- 범례 + 빠른 추가 버튼 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:3px;background:#dbeafe;display:inline-block"></span>세미나</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:3px;background:#fef9c3;display:inline-block"></span>SB전달</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:3px;background:#dcfce7;display:inline-block"></span>카톡/문자 발송</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:3px;background:#e0e7ff;display:inline-block"></span>리허설</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:3px;background:#fce7f3;display:inline-block"></span>모집페이지 오픈</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:3px;background:#f1f5f9;display:inline-block"></span>기타</span>
+      </div>
+      <button class="btn-primary" style="font-size:12px;padding:7px 14px" onclick="toggleQuickAdd()">
+        <i class="ti ti-plus" aria-hidden="true"></i> 일정 추가
+      </button>
+    </div>
+
+    <!-- 빠른 추가 패널 -->
+    <div id="quickAddPanel" style="display:none;margin-bottom:12px">
+      <div class="card" style="border:1.5px solid var(--primary-mid)">
+
+        <!-- 세미나 + 날짜 선택 -->
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="form-group">
+            <span class="form-label">세미나 선택 *</span>
+            <select id="qaSem" style="width:100%"><option value="">선택하세요</option></select>
+          </div>
+          <div class="form-group">
+            <span class="form-label">날짜 *</span>
+            <input type="date" id="qaDate" style="width:100%">
+          </div>
+        </div>
+
+        <!-- 탭 -->
+        <div style="display:flex;gap:4px;margin-bottom:14px">
+          <button id="qaTabPrep" onclick="switchQaTab('prep')" style="font-size:12px;padding:5px 14px;border-radius:99px;border:1.5px solid var(--primary);background:var(--primary);color:#fff;cursor:pointer;font-weight:600;font-family:inherit">✅ 준비 항목</button>
+          <button id="qaTabMsg"  onclick="switchQaTab('msg')"  style="font-size:12px;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border2);background:var(--bg);color:var(--text2);cursor:pointer;font-weight:600;font-family:inherit">📨 카톡/문자 발송</button>
+        </div>
+
+        <!-- 준비 항목 폼 -->
+        <div id="qaFormPrep">
+          <div class="form-label" style="margin-bottom:8px">자주 쓰는 항목 빠른 선택</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px" id="prepChips">
+            <button class="outline" style="font-size:12px" onclick="setPrepLabel('SB 작성')">SB 작성</button>
+            <button class="outline" style="font-size:12px" onclick="setPrepLabel('SB 전달')">SB 전달</button>
+            <button class="outline" style="font-size:12px" onclick="setPrepLabel('디자인 수령')">디자인 수령</button>
+            <button class="outline" style="font-size:12px" onclick="setPrepLabel('교안 수령')">교안 수령</button>
+            <button class="outline" style="font-size:12px" onclick="setPrepLabel('모집페이지 오픈')">모집페이지 오픈</button>
+            <button class="outline" style="font-size:12px" onclick="setPrepLabel('리허설')">리허설</button>
+            <button class="outline" style="font-size:12px" onclick="setPrepLabel('줌링크 확인')">줌링크 확인</button>
+            <button class="outline" style="font-size:12px" onclick="setPrepLabel('세미나 진행')">세미나 진행</button>
+            <button class="outline" style="font-size:12px" onclick="setPrepLabel('다시보기 업로드')">다시보기 업로드</button>
+          </div>
+          <div class="form-group">
+            <span class="form-label">항목 이름 (직접 입력도 가능)</span>
+            <input type="text" id="qaPrepLabel" placeholder="위에서 선택하거나 직접 입력" style="width:100%">
+          </div>
+        </div>
+
+        <!-- 발송 폼 -->
+        <div id="qaFormMsg" style="display:none">
+          <div class="form-label" style="margin-bottom:8px">자주 쓰는 발송 빠른 선택</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+            <button class="outline" style="font-size:12px" onclick="setMsgPreset('1차 홍보','홍보','카톡')">1차 홍보</button>
+            <button class="outline" style="font-size:12px" onclick="setMsgPreset('2차 홍보','홍보','카톡')">2차 홍보</button>
+            <button class="outline" style="font-size:12px" onclick="setMsgPreset('리마인드','리마인드','문자')">리마인드</button>
+            <button class="outline" style="font-size:12px" onclick="setMsgPreset('줌링크 발송','링크','카톡')">줌링크 발송</button>
+            <button class="outline" style="font-size:12px" onclick="setMsgPreset('다시보기 영상 발송','영상','카톡')">다시보기 영상 발송</button>
+          </div>
+          <div class="form-grid" style="margin-bottom:10px">
+            <div class="form-group">
+              <span class="form-label">제목 *</span>
+              <input type="text" id="qaMsgLabel" placeholder="예: 1차 홍보" style="width:100%">
+            </div>
+            <div class="form-group">
+              <span class="form-label">유형</span>
+              <select id="qaMsgType" style="width:100%">
+                <option value="홍보">홍보</option>
+                <option value="리마인드">리마인드</option>
+                <option value="링크">줌링크</option>
+                <option value="영상">다시보기</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <span class="form-label">채널</span>
+              <select id="qaMsgChannel" style="width:100%">
+                <option value="카톡">카톡</option>
+                <option value="문자">문자</option>
+                <option value="카톡+문자">카톡+문자</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <span class="form-label">발송 본문</span>
+            <textarea id="qaMsgBody" rows="5" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:vertical;line-height:1.7" placeholder="보낼 카톡 또는 문자 내용을 그대로 입력해 주세요"></textarea>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px">
+          <button class="btn-primary" onclick="saveQuickAdd()">저장</button>
+          <button class="outline" onclick="closeQuickAdd()">닫기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 달력 그리드 -->
+    <div class="card" style="padding:1rem">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">
+        <div style="text-align:center;font-size:11px;font-weight:600;color:#d95f7a;padding:4px">일</div>
+        <div style="text-align:center;font-size:11px;font-weight:600;color:var(--text2);padding:4px">월</div>
+        <div style="text-align:center;font-size:11px;font-weight:600;color:var(--text2);padding:4px">화</div>
+        <div style="text-align:center;font-size:11px;font-weight:600;color:var(--text2);padding:4px">수</div>
+        <div style="text-align:center;font-size:11px;font-weight:600;color:var(--text2);padding:4px">목</div>
+        <div style="text-align:center;font-size:11px;font-weight:600;color:var(--text2);padding:4px">금</div>
+        <div style="text-align:center;font-size:11px;font-weight:600;color:#7b68c8;padding:4px">토</div>
+      </div>
+      <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+    </div>
+
+    <!-- 날짜 클릭 시 그날 할 일 패널 -->
+    <div id="dayPanel" style="display:none">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div id="dayPanelTitle" style="font-size:15px;font-weight:600;color:var(--text)"></div>
+          <button class="outline" onclick="document.getElementById('dayPanel').style.display='none'">닫기</button>
+        </div>
+
+        <!-- 그날 일정 목록 -->
+        <div id="dayPanelContent"></div>
+
+        <!-- 인라인 추가 폼 -->
+        <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">이 날에 추가하기</div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+            <button class="outline" id="btnAddPrep" onclick="showInlineForm('prep')" style="font-size:12px">✅ 준비 항목</button>
+            <button class="outline" id="btnAddMsg"  onclick="showInlineForm('msg')"  style="font-size:12px">📨 카톡/문자 발송</button>
+          </div>
+
+          <!-- 준비 항목 인라인 폼 -->
+          <div id="inlinePrepForm" style="display:none;background:var(--bg2);border-radius:var(--radius);padding:12px;margin-bottom:8px">
+            <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">✅ 준비 항목 추가</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+              <div class="form-group" style="flex:1;min-width:140px">
+                <span class="form-label">세미나 선택</span>
+                <select id="iPrepSem" style="width:100%"></select>
+              </div>
+              <div class="form-group" style="flex:2;min-width:160px">
+                <span class="form-label">항목 이름</span>
+                <input type="text" id="iPrepLabel" placeholder="예: 교안 수령" style="width:100%">
+              </div>
+              <button class="btn-primary" style="font-size:12px;padding:7px 14px;white-space:nowrap" onclick="saveInlinePrep()">저장</button>
+              <button class="outline" style="font-size:12px;padding:7px 12px" onclick="hideInlineForm('prep')">취소</button>
+            </div>
+          </div>
+
+          <!-- 발송 인라인 폼 -->
+          <div id="inlineMsgForm" style="display:none;background:var(--bg2);border-radius:var(--radius);padding:12px">
+            <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">📨 발송 일정 추가</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <div class="form-group">
+                <span class="form-label">세미나 선택</span>
+                <select id="iMsgSem" style="width:100%"></select>
+              </div>
+              <div class="form-group">
+                <span class="form-label">제목</span>
+                <input type="text" id="iMsgLabel" placeholder="예: 1차 홍보" style="width:100%">
+              </div>
+              <div class="form-group">
+                <span class="form-label">유형</span>
+                <select id="iMsgType" style="width:100%">
+                  <option value="홍보">홍보</option>
+                  <option value="리마인드">리마인드</option>
+                  <option value="링크">줌링크</option>
+                  <option value="영상">다시보기</option>
+                  <option value="기타">기타</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <span class="form-label">채널</span>
+                <select id="iMsgChannel" style="width:100%">
+                  <option value="카톡">카톡</option>
+                  <option value="문자">문자</option>
+                  <option value="카톡+문자">카톡+문자</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:10px">
+              <span class="form-label">발송 본문</span>
+              <textarea id="iMsgBody" rows="5" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:vertical;line-height:1.7" placeholder="보낼 카톡 또는 문자 내용을 그대로 입력해 주세요"></textarea>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-primary" style="font-size:12px;padding:7px 14px" onclick="saveInlineMsg()">저장</button>
+              <button class="outline" style="font-size:12px;padding:7px 12px" onclick="hideInlineForm('msg')">취소</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 세미나 전체 일정 상세 패널 -->
+    <div id="scheduleDetail" style="display:none">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div>
+            <div id="detailTitle" style="font-size:15px;font-weight:600;color:var(--text)"></div>
+            <div id="detailMeta" style="font-size:12px;color:var(--text2);margin-top:3px"></div>
+          </div>
+          <button class="outline" onclick="document.getElementById('scheduleDetail').style.display='none'">닫기</button>
+        </div>
+
+        <!-- 준비 체크리스트 -->
+        <div class="sec-label" style="margin-bottom:10px">준비 체크리스트</div>
+        <div id="checklistWrap" style="margin-bottom:1rem"></div>
+        <button class="outline" style="font-size:12px;margin-bottom:1rem" onclick="openAddCheckModal()">
+          <i class="ti ti-plus" aria-hidden="true"></i> 항목 추가
+        </button>
+
+        <div class="section-divider"></div>
+
+        <!-- 발송 일정 -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;margin-top:1rem">
+          <div class="sec-label" style="margin:0">카톡 / 문자 발송 일정</div>
+          <button class="outline" style="font-size:12px" onclick="openAddMsgModal()">
+            <i class="ti ti-plus" aria-hidden="true"></i> 발송 추가
+          </button>
+        </div>
+        <div id="msgWrap"></div>
+      </div>
+    </div>
+
+    <!-- 발송 본문 모달 -->
+    <div id="msgModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:100;align-items:center;justify-content:center">
+      <div style="background:var(--bg);border-radius:var(--radius-lg);padding:1.5rem;width:min(480px,92vw);box-shadow:0 8px 32px rgba(0,0,0,0.18)">
+        <div style="font-size:15px;font-weight:600;margin-bottom:14px" id="msgModalTitle">발송 내용</div>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr;margin-bottom:10px">
+          <div class="form-group">
+            <span class="form-label">제목</span>
+            <input type="text" id="mLabel" placeholder="예: 1차 홍보">
+          </div>
+          <div class="form-group">
+            <span class="form-label">날짜</span>
+            <input type="date" id="mDate">
+          </div>
+          <div class="form-group">
+            <span class="form-label">유형</span>
+            <select id="mType">
+              <option value="홍보">홍보</option>
+              <option value="리마인드">리마인드</option>
+              <option value="링크">줌링크</option>
+              <option value="영상">다시보기</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <span class="form-label">채널</span>
+            <select id="mChannel">
+              <option value="카톡">카톡</option>
+              <option value="문자">문자</option>
+              <option value="카톡+문자">카톡+문자</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <span class="form-label">발송 본문</span>
+          <textarea id="mBody" rows="6" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:vertical;line-height:1.6" placeholder="발송할 카톡/문자 내용을 입력해 주세요"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="outline" onclick="closeMsgModal()">취소</button>
+          <button class="btn-primary" onclick="saveMsgModal()">저장</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 참여자 수정 모달 -->
+    <div id="memberEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:100;align-items:center;justify-content:center">
+      <div style="background:var(--bg);border-radius:var(--radius-lg);padding:1.5rem;width:min(480px,92vw);box-shadow:0 8px 32px rgba(0,0,0,0.18)">
+        <div style="font-size:15px;font-weight:600;margin-bottom:16px">참여자 정보 수정</div>
+        <input type="hidden" id="editMemId">
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="form-group">
+            <span class="form-label">이름</span>
+            <input type="text" id="editMemName" style="width:100%">
+          </div>
+          <div class="form-group">
+            <span class="form-label">연락처</span>
+            <input type="tel" id="editMemTel" style="width:100%">
+          </div>
+          <div class="form-group">
+            <span class="form-label">관심분야</span>
+            <select id="editMemInt" style="width:100%">
+              <option value="NELT">NELT</option>
+              <option value="성취TEST">성취TEST</option>
+              <option value="교재">교재</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <span class="form-label">참여 횟수</span>
+            <input type="number" id="editMemCount" min="1" style="width:100%">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="outline" onclick="closeMemberEditModal()">취소</button>
+          <button class="btn-primary" onclick="saveMemberEdit()">저장</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 체크항목 추가 모달 -->
+    <div id="checkModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:100;align-items:center;justify-content:center">
+      <div style="background:var(--bg);border-radius:var(--radius-lg);padding:1.5rem;width:min(400px,92vw);box-shadow:0 8px 32px rgba(0,0,0,0.18)">
+        <div style="font-size:15px;font-weight:600;margin-bottom:14px">준비 항목 추가</div>
+        <div class="form-group" style="margin-bottom:10px">
+          <span class="form-label">항목 이름</span>
+          <input type="text" id="cLabel" placeholder="예: 리허설">
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <span class="form-label">날짜</span>
+          <input type="date" id="cDate">
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="outline" onclick="closeCheckModal()">취소</button>
+          <button class="btn-primary" onclick="saveCheckModal()">저장</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+</div>
+<script>
+// ── localStorage 자동 저장/불러오기 ─────────────────────────
+const STORAGE_KEY = 'seminar_dashboard_v1';
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ seminars, members, schedules }));
+  } catch(e) { console.warn('저장 실패:', e); }
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (data.seminars)  seminars  = data.seminars;
+    if (data.members)   members   = data.members;
+    if (data.schedules) schedules = data.schedules;
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── Google Sheets 연동 ───────────────────────────────────────
+const SHEETS_CONFIG_KEY = 'seminar_sheets_config';
+
+function getSheetsConfig() {
+  try { return JSON.parse(localStorage.getItem(SHEETS_CONFIG_KEY)) || {}; } catch { return {}; }
+}
+function saveSheetsConfigToStorage(cfg) {
+  localStorage.setItem(SHEETS_CONFIG_KEY, JSON.stringify(cfg));
+}
+
+// ── 비밀번호 관리 ───────────────────────────────────────────
+const ADMIN_PW_KEY = 'seminar_admin_pw';
+const ADMIN_UNLOCKED_KEY = 'seminar_admin_unlocked';
+
+function getAdminPw() { return localStorage.getItem(ADMIN_PW_KEY) || ''; }
+function isAdminUnlocked() { return sessionStorage.getItem(ADMIN_UNLOCKED_KEY) === '1'; }
+
+const ADMIN_HINT_KEY = 'seminar_admin_hint';
+
+function saveAdminPw() {
+  const pw   = document.getElementById('adminPwInput').value.trim();
+  const hint = document.getElementById('adminPwHintInput').value.trim();
+  if (pw) {
+    localStorage.setItem(ADMIN_PW_KEY, pw);
+    if (hint) localStorage.setItem(ADMIN_HINT_KEY, hint);
+    else localStorage.removeItem(ADMIN_HINT_KEY);
+    document.getElementById('pwStatus').textContent = '✅ 비밀번호가 설정됐어요.';
+    sessionStorage.setItem(ADMIN_UNLOCKED_KEY, '1');
+  } else {
+    localStorage.removeItem(ADMIN_PW_KEY);
+    localStorage.removeItem(ADMIN_HINT_KEY);
+    sessionStorage.removeItem(ADMIN_UNLOCKED_KEY);
+    document.getElementById('pwStatus').textContent = '비밀번호가 해제됐어요.';
+  }
+  rebuildTabNav();
+}
+
+function showPwHint() {
+  const hint = localStorage.getItem(ADMIN_HINT_KEY);
+  const box = document.getElementById('pwHintBox');
+  box.style.display = 'block';
+  box.textContent = hint ? `힌트: ${hint}` : '설정된 힌트가 없어요.';
+}
+
+function checkAdminPw() {
+  const input = document.getElementById('pwModalInput').value;
+  if (input === getAdminPw()) {
+    sessionStorage.setItem(ADMIN_UNLOCKED_KEY, '1');
+    document.getElementById('pwModal').style.display = 'none';
+    document.getElementById('pwModalInput').value = '';
+    document.getElementById('pwModalError').textContent = '';
+    showSection('add');
+  } else {
+    document.getElementById('pwModalError').textContent = '비밀번호가 틀렸어요';
+    document.getElementById('pwModalInput').value = '';
+  }
+}
+
+function requireAdminThenShow(section) {
+  const pw = getAdminPw();
+  if (!pw || isAdminUnlocked()) {
+    showSection(section);
+  } else {
+    document.getElementById('pwModal').style.display = 'flex';
+    document.getElementById('pwModalInput').value = '';
+    document.getElementById('pwModalError').textContent = '';
+  }
+}
+
+// ── 세미나 시트 URL 여러 개 관리 ─────────────────────────────
+function getSemUrls() {
+  const cfg = getSheetsConfig();
+  if (cfg.semUrls && cfg.semUrls.length > 0) return cfg.semUrls;
+  if (cfg.semUrl) return [{ label: '시트1', url: cfg.semUrl }];
+  return [{ label: '시트1', url: '' }];
+}
+
+function renderSemUrlList() {
+  const urls = getSemUrls();
+  const container = document.getElementById('semUrlList');
+  if (!container) return;
+  container.innerHTML = urls.map((item, i) => `
+    <div style="display:flex;gap:6px;align-items:center">
+      <input type="text" value="${item.label||''}" placeholder="탭 이름" style="width:80px;font-size:12px;flex-shrink:0" oninput="updateSemUrlRow(${i},'label',this.value)">
+      <input type="text" value="${item.url||''}" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex:1;font-size:12px" oninput="updateSemUrlRow(${i},'url',this.value)">
+      ${urls.length > 1 ? `<button type="button" class="outline" onclick="removeSemUrlRow(${i})" style="font-size:11px;padding:4px 8px;color:var(--coral);flex-shrink:0">✕</button>` : ''}
+    </div>
+  `).join('');
+}
+
+let _semUrlsTemp = [];
+function initSemUrlsTemp() {
+  _semUrlsTemp = getSemUrls().map(x => ({...x}));
+}
+function updateSemUrlRow(i, key, val) {
+  _semUrlsTemp[i][key] = val;
+}
+function addSemUrlRow() {
+  _semUrlsTemp.push({ label: `시트${_semUrlsTemp.length+1}`, url: '' });
+  document.getElementById('semUrlList').innerHTML = _semUrlsTemp.map((item, i) => `
+    <div style="display:flex;gap:6px;align-items:center">
+      <input type="text" value="${item.label||''}" placeholder="탭 이름" style="width:80px;font-size:12px;flex-shrink:0" oninput="updateSemUrlRow(${i},'label',this.value)">
+      <input type="text" value="${item.url||''}" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex:1;font-size:12px" oninput="updateSemUrlRow(${i},'url',this.value)">
+      ${_semUrlsTemp.length > 1 ? `<button type="button" class="outline" onclick="removeSemUrlRow(${i})" style="font-size:11px;padding:4px 8px;color:var(--coral);flex-shrink:0">✕</button>` : ''}
+    </div>
+  `).join('');
+}
+function removeSemUrlRow(i) {
+  _semUrlsTemp.splice(i, 1);
+  document.getElementById('semUrlList').innerHTML = _semUrlsTemp.map((item, idx) => `
+    <div style="display:flex;gap:6px;align-items:center">
+      <input type="text" value="${item.label||''}" placeholder="탭 이름" style="width:80px;font-size:12px;flex-shrink:0" oninput="updateSemUrlRow(${idx},'label',this.value)">
+      <input type="text" value="${item.url||''}" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex:1;font-size:12px" oninput="updateSemUrlRow(${idx},'url',this.value)">
+      ${_semUrlsTemp.length > 1 ? `<button type="button" class="outline" onclick="removeSemUrlRow(${idx})" style="font-size:11px;padding:4px 8px;color:var(--coral);flex-shrink:0">✕</button>` : ''}
+    </div>
+  `).join('');
+}
+function parseScheduleCSV(rows) {
+  // 컬럼: 날짜, 제목, 종류, 메모
+  return rows.map((r, idx) => {
+    const date  = (r['날짜']  || r['date']  || '').trim();
+    const label = (r['제목']  || r['title'] || '').trim();
+    const type  = (r['종류']  || r['type']  || '기타').trim();
+    const note  = (r['메모']  || r['note']  || '').trim();
+    if (!date || !label) return null;
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return null;
+    // 종류 → evType 매핑
+    const evTypeMap = { '세미나':'seminar', 'SB전달':'prep', '카톡/문자 발송':'msg', '리허설':'rehearse', '모집페이지 오픈':'open', '기타':'etc' };
+    const evType = evTypeMap[type] || 'etc';
+    return { id: 'SCH-SHEETS-' + idx, date, label, type, evType, note, semId: null };
+  }).filter(Boolean);
+}
+
+async function loadScheduleFromSheets(manual = false) {
+  const cfg = getSheetsConfig();
+  if (!cfg.scheduleUrl) {
+    if (manual) showToast('먼저 일정 시트 URL을 설정해 주세요');
+    return;
+  }
+  try {
+    const csv = await fetchSheetCSV(cfg.scheduleUrl);
+    const rows = parseCSV(csv);
+    const parsed = parseScheduleCSV(rows);
+    if (parsed.length > 0) {
+      // 기존 schedules에서 Sheets로 불러온 항목 교체, 로컬 추가분은 유지
+      const localOnly = (schedules || []).filter(s => !s.id.startsWith('SCH-SHEETS-'));
+      schedules = [...localOnly, ...parsed];
+      saveToStorage();
+      if (document.getElementById('calGrid')) renderCalendar();
+      if (manual) showToast(`✅ 일정 ${parsed.length}건 불러왔어요`);
+    } else {
+      if (manual) showToast('❗ 일정 데이터가 없어요. 헤더(날짜·제목·종류·메모)를 확인해 주세요');
+    }
+  } catch(e) {
+    if (manual) showToast('❌ ' + e.message);
+  }
+}
+
+function sheetUrlToCsvUrl(url, sheetName) {
+  // 일반 Sheets URL → CSV export URL 변환
+  const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  if (!m) return null;
+  const id = m[1];
+  // gid 파라미터 추출 (시트 탭)
+  const gidM = url.match(/[?&]gid=([0-9]+)/);
+  const gid = gidM ? gidM[1] : '0';
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`;
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false, i = 0;
+  while (i < line.length) {
+    const ch = line[i];
+    if (inQ) {
+      if (ch === '"') {
+        // 다음 문자도 "이면 이스케이프된 따옴표
+        if (line[i+1] === '"') { cur += '"'; i += 2; continue; }
+        inQ = false; i++; continue;
+      }
+      cur += ch; i++;
+    } else {
+      if (ch === '"') { inQ = true; i++; continue; }
+      if (ch === ',') { result.push(cur.trim()); cur = ''; i++; continue; }
+      cur += ch; i++;
+    }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function parseCSV(text) {
+  // 따옴표 안의 줄바꿈을 처리하는 CSV 파서
+  const rows = [];
+  let cur = '', inQ = false;
+  const lines = [];
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') { inQ = !inQ; cur += ch; continue; }
+    if ((ch === '\n' || ch === '\r') && !inQ) {
+      if (ch === '\r' && text[i+1] === '\n') i++;
+      if (cur.trim()) lines.push(cur);
+      cur = ''; continue;
+    }
+    cur += ch;
+  }
+  if (cur.trim()) lines.push(cur);
+  if (lines.length < 2) return [];
+  const headers = parseCSVLine(lines[0]).map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const vals = parseCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = (vals[i] || '').trim(); });
+    return obj;
+  }).filter(r => Object.values(r).some(v => v));
+}
+
+async function fetchSheetCSV(url) {
+  const csvUrl = sheetUrlToCsvUrl(url);
+  if (!csvUrl) throw new Error('올바른 Google Sheets URL이 아니에요');
+  const res = await fetch(csvUrl);
+  if (!res.ok) throw new Error(`시트를 불러올 수 없어요 (${res.status}). 공유 설정을 확인해 주세요`);
+  const buf = await res.arrayBuffer();
+  return new TextDecoder('utf-8').decode(buf);
+}
+
+function parseSeminarCSV(rows) {
+  // 컬럼: 세미나명, 날짜, 종류, 신청자수, 최대참석자, 참석률, 강사/학원, 영상, 교안, 메모
+  return rows.map((r, idx) => {
+    const name     = r['세미나명']   || r['name']     || '';
+    const date     = r['날짜']       || r['date']     || '';
+    const cat      = r['종류']       || r['cat']      || '기타';
+    const inst     = r['강사 / 학원'] || r['강사/학원'] || r['강사명'] || r['inst'] || '';
+    const applied  = parseInt(r['신청자수']  || r['신청자']  || r['applied']  || '0') || 0;
+    const attended = parseInt(r['최대참석자'] || r['참석자']  || r['attended'] || '0') || 0;
+    const resultVideo = r['영상']   || r['결과영상'] || r['video'] || '';
+    const resultFile  = r['교안']   || r['file']    || '';
+    const resultNote  = r['메모']   || r['note']    || '';
+    if (!name || !date) return null;
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return null;
+    return {
+      id: 'SEM-SHEETS-' + idx,
+      name, date, year: d.getFullYear(), month: d.getMonth() + 1,
+      cat, inst, applied, attended, resultVideo, resultFile, resultNote
+    };
+  }).filter(Boolean);
+}
+
+function parseMemberCSV(rows, parsedSeminars) {
+  // 컬럼: 날짜, 회원ID, 이름, 연락처, 세미나명
+  // B형: 1행 = 1건, 중복 참여시 여러 행
+
+  const semNameMap = {};
+  (parsedSeminars || []).forEach(s => { semNameMap[s.name.trim()] = s.id; });
+
+  const memberMap = {};
+  rows.forEach((r, idx) => {
+    const rawId    = (r['회원ID'] || r['id'] || '').trim();
+    const name     = (r['이름']   || r['name'] || '').trim();
+    const tel      = (r['연락처'] || r['tel']  || '').trim();
+    const interest = (r['관심분야'] || r['interest'] || '').trim();
+    const semName  = (r['세미나명'] || r['참여세미나명'] || r['seminar'] || '').trim();
+    const semDate  = (r['날짜'] || r['date'] || '').trim();
+
+    if (!name && !rawId) return;
+
+    const telNorm = tel.replace(/[^0-9]/g, '');
+    const key = rawId || (telNorm ? 'TEL-' + telNorm : 'IDX-' + idx);
+
+    if (!memberMap[key]) {
+      memberMap[key] = {
+        id: rawId || key,
+        name, tel, interest,
+        semIds: new Set(),
+        semNames: new Set(),
+        lastDate: semDate,
+      };
+    }
+
+    const m = memberMap[key];
+    if (name)     m.name     = name;
+    if (tel)      m.tel      = tel;
+    if (interest && interest !== '기타') m.interest = interest;
+    if (semDate && semDate > m.lastDate) m.lastDate = semDate;
+
+    if (semName) {
+      const sid = semNameMap[semName];
+      if (sid) m.semIds.add(sid);
+      m.semNames.add(semName);
+    }
+  });
+
+  return Object.values(memberMap).map(m => {
+    const semIdsArr = [...m.semIds];
+    const count = semIdsArr.length || m.semNames.size || 1;
+    const tier  = count >= 5 ? 'hot' : count >= 3 ? 'warm' : 'new';
+
+    semIdsArr.forEach(sid => {
+      const sem = (parsedSeminars || []).find(s => s.id === sid);
+      if (sem) sem._memberCount = (sem._memberCount || 0) + 1;
+    });
+
+    return {
+      id:       m.id,
+      name:     m.name,
+      tel:      m.tel,
+      interest: m.interest,
+      count,
+      tier,
+      last:     m.lastDate,
+      semIds:   semIdsArr,
+    };
+  }).filter(m => m.name);
+}
+
+async function loadFromSheets(manual = false) {
+  const cfg = getSheetsConfig();
+  const semUrls = (cfg.semUrls || []).filter(x => x.url);
+  if (semUrls.length === 0 && !cfg.semUrl) {
+    if (manual) showToast('먼저 Sheets URL을 설정해 주세요');
+    return;
+  }
+  updateSheetsBtnState('loading');
+  try {
+    // 여러 탭 순서대로 불러와서 합치기
+    const urlList = semUrls.length > 0 ? semUrls : [{ url: cfg.semUrl }];
+    let allSeminars = [];
+    for (const item of urlList) {
+      try {
+        const csv = await fetchSheetCSV(item.url);
+        const rows = parseCSV(csv);
+        const parsed = parseSeminarCSV(rows);
+        allSeminars = allSeminars.concat(parsed);
+      } catch(e) { console.warn(`시트 오류 (${item.label||item.url}):`, e); }
+    }
+    const newSeminars = allSeminars;
+
+    const memUrls = (cfg.memUrls || []).filter(x => x.url);
+    const legacyMem = cfg.memberUrl ? [{ url: cfg.memberUrl }] : [];
+    const memberUrlList = memUrls.length > 0 ? memUrls : legacyMem;
+    let newMembers = [];
+    if (memberUrlList.length > 0) {
+      try {
+        let allMemRows = [];
+        for (const item of memberUrlList) {
+          const memCsv = await fetchSheetCSV(item.url);
+          allMemRows = allMemRows.concat(parseCSV(memCsv));
+        }
+        newMembers = parseMemberCSV(allMemRows, newSeminars);
+        newSeminars.forEach(s => {
+          if (s._memberCount && s._memberCount > s.applied) s.applied = s._memberCount;
+          delete s._memberCount;
+        });
+      } catch(e) { console.warn('참여자 시트 오류:', e); }
+    }
+
+    if (newSeminars.length > 0) {
+      seminars = newSeminars;
+      if (newMembers.length > 0) members = newMembers;
+      saveToStorage();
+      refreshFilters();
+      applyFilters();
+      if (document.getElementById('calGrid')) renderCalendar();
+      if (document.getElementById('sec-seminars').style.display !== 'none') renderSeminarTable();
+      if (document.getElementById('sec-members').style.display !== 'none') renderMemberTable();
+      updateSheetsBtnState('connected');
+      if (manual) {
+        const memMsg = newMembers.length > 0 ? `, 참여자 ${newMembers.length}명` : '';
+        showToast(`✅ 세미나 ${newSeminars.length}개${memMsg} 불러왔어요`);
+      }
+    } else {
+      updateSheetsBtnState('error');
+      if (manual) showToast('❗ 데이터를 찾을 수 없어요. 시트 컬럼명을 확인해 주세요');
+    }
+  } catch(e) {
+    updateSheetsBtnState('error');
+    if (manual) showToast('❌ ' + e.message);
+  }
+}
+
+function updateSheetsBtnState(state) {
+  const btn = document.getElementById('sheetsBtnLabel');
+  if (!btn) return;
+  if (state === 'loading') btn.textContent = '불러오는 중...';
+  else if (state === 'connected') {
+    btn.textContent = '✅ Sheets 연결됨';
+    const now = new Date();
+    const label = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    localStorage.setItem('seminar_last_updated', label);
+    const el = document.getElementById('lastUpdatedLabel');
+    if (el) el.textContent = label;
+    // 관리자(비밀번호 설정한 본인)만 삭제 버튼 표시
+    const clearBtn = document.getElementById('clearMembersBtn');
+    if (clearBtn) clearBtn.style.display = (!getAdminPw() || isAdminUnlocked()) ? 'flex' : 'none';
+  }
+  else if (state === 'error') btn.textContent = '⚠️ Sheets 오류';
+  else btn.textContent = 'Sheets 연동';
+}
+
+function openSheetsModal() {
+  const cfg = getSheetsConfig();
+  initSemUrlsTemp();
+  renderSemUrlList();
+  initMemUrlsTemp();
+  renderMemUrlList();
+  document.getElementById('sheetsScheduleUrl').value = cfg.scheduleUrl || '';
+  document.getElementById('sheetsStatus').style.display = 'none';
+  document.getElementById('adminPwSection').style.display = 'none';
+  document.getElementById('sheetsModal').style.display  = 'flex';
+}
+
+// ── 관리자 단축키: Shift+A 5번 연속 → 비밀번호 설정 UI 표시 ──
+let _shiftACount = 0, _shiftATimer = null;
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'A' && e.shiftKey) {
+    _shiftACount++;
+    clearTimeout(_shiftATimer);
+    _shiftATimer = setTimeout(() => { _shiftACount = 0; }, 1500);
+    if (_shiftACount >= 5) {
+      _shiftACount = 0;
+      const sec = document.getElementById('adminPwSection');
+      if (sec) {
+        sec.style.display = 'block';
+        document.getElementById('adminPwInput').value = getAdminPw();
+        document.getElementById('adminPwHintInput').value = localStorage.getItem(ADMIN_HINT_KEY) || '';
+        document.getElementById('pwStatus').textContent = getAdminPw() ? '비밀번호가 설정되어 있어요' : '';
+        // 모달이 닫혀있으면 열기
+        if (document.getElementById('sheetsModal').style.display === 'none') {
+          openSheetsModal();
+          document.getElementById('adminPwSection').style.display = 'block';
+        }
+      }
+    }
+  }
+});
+function closeSheetsModal() {
+  document.getElementById('sheetsModal').style.display = 'none';
+}
+
+async function saveSheetsConfig() {
+  const semUrls     = _semUrlsTemp.filter(x => x.url.trim());
+  const memUrls     = _memUrlsTemp.filter(x => x.url.trim());
+  const scheduleUrl = document.getElementById('sheetsScheduleUrl').value.trim();
+  if (semUrls.length === 0) { setModalStatus('error', '세미나 시트 URL을 하나 이상 입력해 주세요'); return; }
+  if (!semUrls[0].url.includes('docs.google.com/spreadsheets')) {
+    setModalStatus('error', 'Google Sheets URL 형식이 아니에요'); return;
+  }
+  saveSheetsConfigToStorage({ semUrls, memUrls, scheduleUrl });
+  setModalStatus('loading', '시트에 연결하는 중...');
+  document.getElementById('sheetsSaveBtn').disabled = true;
+  try {
+    let allParsed = [];
+    for (const item of semUrls) {
+      try {
+        const csv = await fetchSheetCSV(item.url);
+        const parsed = parseSeminarCSV(parseCSV(csv));
+        allParsed = allParsed.concat(parsed);
+      } catch(e2) { console.warn(`시트 오류 (${item.label}):`, e2); }
+    }
+    if (allParsed.length === 0) {
+      setModalStatus('warn', '연결은 됐지만 데이터가 없어요. 헤더 컬럼명(세미나명, 날짜, 종류…)을 확인해 주세요');
+    } else {
+      seminars = allParsed;
+      let memCount = 0;
+      if (memUrls.length > 0) {
+        try {
+          let allMemRows = [];
+          for (const item of memUrls) {
+            const memCsv = await fetchSheetCSV(item.url);
+            allMemRows = allMemRows.concat(parseCSV(memCsv));
+          }
+          const memParsed = parseMemberCSV(allMemRows, seminars);
+          seminars.forEach(s => { if (s._memberCount && s._memberCount > s.applied) s.applied = s._memberCount; delete s._memberCount; });
+          members = memParsed; memCount = memParsed.length;
+        } catch(e2) { setModalStatus('warn', `참여자 시트 오류: ${e2.message}`); }
+      }
+      let schCount = 0;
+      if (scheduleUrl) {
+        try {
+          const schParsed = parseScheduleCSV(parseCSV(await fetchSheetCSV(scheduleUrl)));
+          if (schParsed.length > 0) {
+            schedules = [...(schedules||[]).filter(s=>!s.id.startsWith('SCH-SHEETS-')), ...schParsed];
+            schCount = schParsed.length;
+          } else {
+            setModalStatus('warn', `세미나/참여자는 연결됐지만 일정 데이터가 없어요. 헤더(날짜·제목·종류·메모)를 확인해 주세요`);
+          }
+        } catch(e2) {
+          setModalStatus('warn', `세미나/참여자는 연결됐지만 일정 시트 오류: ${e2.message}`);
+        }
+      }
+      saveToStorage(); refreshFilters(); applyFilters();
+      if (document.getElementById('calGrid')) renderCalendar();
+      const memMsg = memCount > 0 ? `, 참여자 ${memCount}명` : '';
+      const schMsg = schCount > 0 ? `, 일정 ${schCount}건` : '';
+      setModalStatus('ok', `✅ 연결 성공! 세미나 ${allParsed.length}개${memMsg}${schMsg} 불러왔어요.`);
+      updateSheetsBtnState('connected');
+    }
+  } catch(e) {
+    setModalStatus('error', '❌ ' + e.message);
+    updateSheetsBtnState('error');
+  }
+  document.getElementById('sheetsSaveBtn').disabled = false;
+}
+
+function setModalStatus(type, msg) {
+  const el = document.getElementById('sheetsStatus');
+  el.style.display = 'block';
+  const styles = {
+    ok:      'background:#eef8f4;color:#1e9e6e;border:1px solid #b8e8d4',
+    error:   'background:#fdf0f0;color:#c84040;border:1px solid #f5c0c0',
+    warn:    'background:#fdf4e8;color:#b86e1a;border:1px solid #f5d8a0',
+    loading: 'background:var(--bg2);color:var(--text2);border:1px solid var(--border)',
+  };
+  el.style.cssText += ';' + (styles[type] || styles.loading);
+  el.textContent = msg;
+}
+
+function clearSheetsConfig() {
+  if (!confirm('Sheets 연동을 해제할까요? 기존 로컬 데이터는 유지돼요.')) return;
+  localStorage.removeItem(SHEETS_CONFIG_KEY);
+  initSemUrlsTemp();
+  renderSemUrlList();
+  initMemUrlsTemp();
+  renderMemUrlList();
+  document.getElementById('sheetsScheduleUrl').value = '';
+  setModalStatus('ok', '연동이 해제됐어요');
+  updateSheetsBtnState('none');
+}
+
+// ── 데이터 변수 ───────────────────────────────────────────────
+let seminars = [];
+let members = [];
+let schedules = {};
+let monthChart = null, catChart = null;
+const CAT_COLORS = ['#d95f7a','#1e9e6e','#c47a1e','#7b68c8','#60a8c8'];
+const CATS_DEFAULT = ['NELT','성취TEST','교재','기타'];
+
+
+let xlsParsedRows = [];
+
+
+function populateResultSemSelect() {
+  const sel = document.getElementById('fResultSem');
+  if (!sel) return; // 탭이 숨겨진 상태일 수 있음
+  if (seminars.length === 0) {
+    sel.innerHTML = '<option value="">먼저 세미나를 등록해 주세요</option>';
+    return;
+  }
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">세미나를 선택하세요</option>' +
+    [...seminars].sort((a,b)=>b.date.localeCompare(a.date))
+    .map(s=>`<option value="${s.id}">${s.date} · ${s.name}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+function loadResult(semId) {
+  if (!semId) return;
+  const sem = seminars.find(s=>s.id===semId);
+  if (!sem) return;
+  document.getElementById('fResultVideo').value = sem.resultVideo || '';
+  document.getElementById('fResultFile').value  = sem.resultFile  || '';
+  document.getElementById('fResultNote').value  = sem.resultNote  || '';
+}
+
+function saveResult() {
+  const semId = document.getElementById('fResultSem').value;
+  if (!semId) { showToast('세미나를 선택해 주세요'); return; }
+  const sem = seminars.find(s=>s.id===semId);
+  if (!sem) return;
+  sem.resultVideo = document.getElementById('fResultVideo').value.trim();
+  sem.resultFile  = document.getElementById('fResultFile').value.trim();
+  sem.resultNote  = document.getElementById('fResultNote').value.trim();
+  saveToStorage();
+  showToast(`"${sem.name}" 결과물 저장 완료!`);
+  renderSeminarTable();
+}
+
+
+function onAttendSemChange(semId) {
+  document.getElementById('attendSaved').style.display = 'none';
+  if (!semId) { document.getElementById('fAttendCount').value = ''; return; }
+  const sem = seminars.find(s=>s.id===semId);
+  document.getElementById('fAttendCount').value = sem && sem.attended ? sem.attended : '';
+}
+
+function saveAttendCount() {
+  const semId = document.getElementById('fXlsSem').value;
+  if (!semId) { showToast('세미나를 선택해 주세요'); return; }
+  const val = parseInt(document.getElementById('fAttendCount').value);
+  if (isNaN(val) || val < 0) { showToast('올바른 숫자를 입력해 주세요'); return; }
+  const sem = seminars.find(s=>s.id===semId);
+  if (!sem) return;
+  if (sem.applied > 0 && val > sem.applied) {
+    const ok = confirm(`최대 참석자(${val}명)가 신청자(${sem.applied}명)보다 많아요.\n신청자 수가 0인 상태에서 입력하셨거나 오입력일 수 있어요.\n그래도 저장할까요?`);
+    if (!ok) return;
+  }
+  sem.attended = val;
+  saveToStorage();
+  document.getElementById('attendSaved').style.display = 'inline';
+  setTimeout(()=>{ document.getElementById('attendSaved').style.display='none'; }, 2000);
+  applyFilters();
+  showToast(`최대 참석자 수 ${val}명 저장 완료!`);
+}
+
+function populateXlsSemSelect() {
+  const sel = document.getElementById('fXlsSem');
+  if (!sel) return; // 탭이 숨겨진 상태일 수 있음
+  if (seminars.length === 0) {
+    sel.innerHTML = '<option value="">먼저 세미나를 등록해 주세요</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">세미나를 선택하세요</option>' +
+    [...seminars].sort((a,b)=>b.date.localeCompare(a.date))
+    .map(s=>`<option value="${s.id}">${s.date} · ${s.name}</option>`).join('');
+}
+
+function importExcel(e) {
+  const semId = document.getElementById('fXlsSem').value;
+  if (!semId) { showToast('먼저 세미나를 선택해 주세요'); e.target.value=''; return; }
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const wb = XLSX.read(ev.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      if (rows.length === 0) { showToast('데이터가 없어요. 파일을 확인해 주세요'); return; }
+
+      // 컬럼 매핑 — 정확히 일치해야 함
+      const colMap = {};
+      const firstRow = rows[0];
+      Object.keys(firstRow).forEach(k => {
+        const kk = k.trim();
+        if (/회원.?id|회원id/i.test(kk)) colMap.id = k;
+        else if (kk === '이름') colMap.name = k;
+        else if (kk === '연락처') colMap.tel = k;
+        else if (/관심분야/.test(kk)) colMap.interest = k;
+      });
+
+      if (!colMap.id || !colMap.name || !colMap.tel) {
+        const keys = Object.keys(firstRow).join(', ');
+        showToast(`회원ID, 이름, 연락처 컬럼이 필요해요.
+현재 인식된 컬럼: ${keys}`);
+        return;
+      }
+
+      xlsParsedRows = rows.map(r => ({
+        id:       String(r[colMap.id]||'').trim(),
+        name:     String(r[colMap.name]||'').trim(),
+        tel:      String(r[colMap.tel]||'').trim(),
+        interest: colMap.interest ? String(r[colMap.interest]||'기타').trim() : '기타',
+      })).filter(r => r.id && r.name && r.tel);
+
+      if (xlsParsedRows.length === 0) { showToast('유효한 행이 없어요. 내용을 확인해 주세요'); return; }
+
+      document.getElementById('xlsInfo').textContent =
+        `총 ${xlsParsedRows.length}명 인식됨 — 아래 내용을 확인하고 반영해 주세요`;
+      document.getElementById('xlsHead').innerHTML =
+        '<tr><th style="width:20%">회원ID</th><th style="width:20%">이름</th><th style="width:30%">연락처</th><th style="width:30%">관심분야</th></tr>';
+      document.getElementById('xlsBody').innerHTML =
+        xlsParsedRows.slice(0,10).map(r =>
+          `<tr><td>${r.id}</td><td style="font-weight:500">${r.name}</td><td>${r.tel}</td><td>${r.interest}</td></tr>`
+        ).join('') + (xlsParsedRows.length > 10 ? `<tr><td colspan="4" style="color:var(--text3);text-align:center">... 외 ${xlsParsedRows.length-10}명</td></tr>` : '');
+      document.getElementById('xlsPreview').style.display = 'block';
+    } catch(err) {
+      showToast('파일을 읽을 수 없어요. xlsx/xls 형식인지 확인해 주세요');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function confirmExcelImport() {
+  const semId = document.getElementById('fXlsSem').value;
+  if (!semId) { showToast('세미나를 선택해 주세요'); return; }
+  const sem = seminars.find(s=>s.id===semId);
+  if (!sem) return;
+
+  // 이 세미나에 이미 등록된 전화번호 목록 (이전 업로드)
+  // members 중 last === sem.date 인 사람들의 tel
+  const alreadyTels = new Set(
+    members
+      .filter(m => m.tel && m.semIds && m.semIds.includes(semId))
+      .map(m => m.tel.replace(/[^0-9]/g, ''))
+  );
+
+  let added = 0, updated = 0;
+  xlsParsedRows.forEach(r => {
+    const tel = (r.tel||'').replace(/[^0-9]/g, '');
+
+    // members에서 같은 tel 또는 같은 id로 찾기
+    let existing = members.find(m =>
+      (m.id && m.id === r.id) ||
+      (m.tel && m.tel.replace(/[^0-9]/g,'') === tel && tel)
+    );
+
+    if (existing) {
+      // 이미 이 세미나에 참여 기록이 없으면 추가
+      if (!existing.semIds) existing.semIds = [];
+      const alreadyInSem = existing.semIds.includes(semId);
+      if (!alreadyInSem) {
+        existing.semIds.push(semId);
+        existing.count += 1;
+        existing.last = sem.date;
+        existing.tier = existing.count>=5?'hot':existing.count>=3?'warm':'new';
+      }
+      // 정보 최신화
+      existing.name = r.name || existing.name;
+      existing.tel  = r.tel  || existing.tel;
+      if (r.interest && r.interest !== '기타') existing.interest = r.interest;
+      updated++;
+    } else {
+      members.push({
+        id: r.id || 'MEM-'+Date.now()+'-'+Math.random().toString(36).slice(2,5),
+        name: r.name, tel: r.tel, count: 1,
+        last: sem.date, interest: r.interest, tier: 'new',
+        semIds: [semId]
+      });
+      added++;
+    }
+  });
+
+  // sem.applied = 이 세미나에 semIds로 연결된 고유 인원 수로 재계산
+  sem.applied = members.filter(m => m.semIds && m.semIds.includes(semId)).length;
+  // attended는 직접 입력값 유지 (자동으로 덮어쓰지 않음)
+
+  cancelExcel();
+  saveToStorage();
+  refreshFilters();
+  applyFilters();
+  showToast(`완료! 신규 ${added}명 추가, ${updated}명 정보 업데이트 (총 ${sem.applied}명)`);
+}
+
+function cancelExcel() {
+  xlsParsedRows = [];
+  document.getElementById('xlsPreview').style.display = 'none';
+  document.getElementById('xlsFileInput').value = '';
+}
+
+function downloadTemplate() {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['회원ID','이름','연락처','관심분야'],
+    ['MEM-001','홍길동','010-1234-5678','마케팅'],
+    ['MEM-002','김영희','010-2345-6789','데이터'],
+  ]);
+  ws['!cols'] = [{wch:12},{wch:10},{wch:16},{wch:10}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '참여자');
+  XLSX.writeFile(wb, '참여자_업로드_양식.xlsx');
+}
+
+
+// ── 중복 제거 유틸 (전화번호 기준) ───────────────────────────
+// 필터된 세미나들의 신청자 중 전화번호 기준 고유 인원 수 반환
+function uniqueApplicants(filteredSeminars) {
+  // members에서 filteredSeminars에 참여한 사람들만 추출
+  // members의 tel 기준 중복 제거
+  const semIds = new Set(filteredSeminars.map(s => s.id));
+  const tels = new Set();
+  members.forEach(m => {
+    if (m.tel) tels.add(m.tel.replace(/[^0-9]/g, ''));
+  });
+  // members 데이터가 없으면 applied 합산으로 fallback
+  if (tels.size === 0) {
+    return filteredSeminars.reduce((a,s)=>a+s.applied, 0);
+  }
+  return tels.size;
+}
+
+// 월별 고유 신청자: 해당 월 세미나들의 members 전화번호 기준
+function uniqueApplicantsByMonth(filteredSeminars) {
+  const byMonth = Array(12).fill(0);
+  filteredSeminars.forEach(s => {
+    // members에서 이 세미나에 해당하는 사람 찾기 (last가 같은 월)
+    // → members 연동 전까지는 applied 그대로 사용하되 전체는 중복 제거
+    byMonth[s.month-1] += s.applied;
+  });
+  return byMonth;
+}
+
+function allCats() {
+  const s = new Set(seminars.map(s=>s.cat));
+  return CATS_DEFAULT.filter(c=>s.has(c)).concat([...s].filter(c=>!CATS_DEFAULT.includes(c)));
+}
+function allYears() {
+  return [...new Set(seminars.map(s=>s.year))].sort((a,b)=>b-a);
+}
+
+function refreshFilters() {
+  const years = allYears();
+  ['selYear','sYear'].forEach(id => {
+    const el = document.getElementById(id);
+    const cur = el.value;
+    el.innerHTML = '<option value="all">전체</option>' + years.map(y=>`<option value="${y}">${y}년</option>`).join('');
+    if (years.includes(+cur)) el.value = cur;
+  });
+  const cats = allCats();
+  ['selCat','sCat','mInt'].forEach(id => {
+    const el = document.getElementById(id);
+    const cur = el.value;
+    el.innerHTML = '<option value="all">전체</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+    if (cats.includes(cur)) el.value = cur;
+  });
+}
+
+// 탭 네비 초기화
+const TAB_DEFS = [
+  { key:'dash',     icon:'ti-layout-dashboard', label:'대시보드' },
+  { key:'seminars', icon:'ti-calendar',          label:'세미나 목록' },
+  { key:'members',  icon:'ti-users',             label:'참여자 관리' },
+  { key:'schedule', icon:'ti-calendar-event',    label:'일정 달력' },
+];
+let _memUrlsTemp = [];
+function getMemUrls() {
+  const cfg = getSheetsConfig();
+  if (cfg.memUrls && cfg.memUrls.length > 0) return cfg.memUrls;
+  if (cfg.memberUrl) return [{ label: '시트1', url: cfg.memberUrl }];
+  return [{ label: '시트1', url: '' }];
+}
+function initMemUrlsTemp() {
+  _memUrlsTemp = getMemUrls().map(x => ({...x}));
+}
+function renderMemUrlList() {
+  const container = document.getElementById('memUrlList');
+  if (!container) return;
+  container.innerHTML = _memUrlsTemp.map((item, i) => `
+    <div style="display:flex;gap:6px;align-items:center">
+      <input type="text" value="${item.label||''}" placeholder="탭 이름" style="width:80px;font-size:12px;flex-shrink:0" oninput="updateMemUrlRow(${i},'label',this.value)">
+      <input type="text" value="${item.url||''}" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex:1;font-size:12px" oninput="updateMemUrlRow(${i},'url',this.value)">
+      ${_memUrlsTemp.length > 1 ? `<button type="button" class="outline" onclick="removeMemUrlRow(${i})" style="font-size:11px;padding:4px 8px;color:var(--coral);flex-shrink:0">✕</button>` : ''}
+    </div>
+  `).join('');
+}
+function updateMemUrlRow(i, key, val) { _memUrlsTemp[i][key] = val; }
+function addMemUrlRow() {
+  _memUrlsTemp.push({ label: `시트${_memUrlsTemp.length+1}`, url: '' });
+  renderMemUrlList();
+}
+function removeMemUrlRow(i) {
+  _memUrlsTemp.splice(i, 1);
+  renderMemUrlList();
+}
+
+// ── 링크 팝업 ─────────────────────────────────────────────
+let _currentLink = '';
+function showLinkPopup(encodedLink, encodedTitle) {
+  const link  = decodeURIComponent(encodedLink);
+  const title = decodeURIComponent(encodedTitle);
+  _currentLink = link;
+  document.getElementById('linkModalTitle').textContent = title;
+  const isUrl = /^https?:\/\//i.test(link);
+  document.getElementById('linkModalContent').innerHTML = isUrl
+    ? `<a href="${link}" target="_blank" style="color:var(--accent)">${link}</a>`
+    : `<span>${link}</span>`;
+  document.getElementById('linkModalOpenBtn').style.display = isUrl ? 'inline-flex' : 'none';
+  document.getElementById('linkModal').style.display = 'flex';
+}
+function closeLinkModal() {
+  document.getElementById('linkModal').style.display = 'none';
+}
+function copyLinkFromModal() {
+  navigator.clipboard.writeText(_currentLink).then(() => {
+    showToast('복사됐어요!');
+    closeLinkModal();
+  });
+}
+function openLinkFromModal() {
+  window.open(_currentLink, '_blank');
+  closeLinkModal();
+}
+  rebuildTabNav();
+}
+function rebuildTabNav() {
+  const el = document.getElementById('tabNav');
+  if (!el) return;
+  const pw = getAdminPw();
+  el.innerHTML = TAB_DEFS.map(t => {
+    const isAdd = t.key === 'add';
+    const onclick = isAdd && pw
+      ? `requireAdminThenShow('add')`
+      : `showSection('${t.key}',this)`;
+    const lockIcon = isAdd && pw && !isAdminUnlocked() ? ' 🔒' : '';
+    return `<button class="tab${t.key==='dash'?' on':''}" onclick="${onclick}">
+      <i class="ti ${t.icon}" aria-hidden="true"></i>${t.label}${lockIcon}
+    </button>`;
+  }).join('');
+}
+
+function showSection(name, btn) {
+  ['dash','seminars','members','add','schedule'].forEach(s => {
+    const el = document.getElementById('sec-'+s);
+    if (el) el.style.display = s===name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  if (btn && btn.classList.contains('tab')) btn.classList.add('on');
+  else {
+    const idx = TAB_DEFS.findIndex(t=>t.key===name);
+    document.querySelectorAll('.tab')[idx]?.classList.add('on');
+  }
+  document.querySelectorAll('.nav').forEach(b=>b.classList.remove('on'));
+  if (name==='seminars') renderSeminarTable();
+  if (name==='members') renderMemberTable();
+  if (name==='schedule') renderCalendar();
+}
+
+function getFiltered() {
+  const y = document.getElementById('selYear').value;
+  const m = document.getElementById('selMonth').value;
+  const c = document.getElementById('selCat').value;
+  return seminars.filter(s=>(y==='all'||s.year==y)&&(m==='all'||s.month==m)&&(c==='all'||s.cat===c))
+    .sort((a,b)=>b.date.localeCompare(a.date));
+}
+
+function rateClass(r) { return r>=85?'rate-high':r>=70?'rate-mid':'rate-low'; }
+
+function applyFilters() {
+  if (!document.getElementById('mTotal')) return;
+  const fs = getFiltered();
+  const totalApplyRaw = fs.reduce((a,s)=>a+s.applied,0);   // 중복 포함 합산
+  const totalAttend   = fs.reduce((a,s)=>a+(s.attended||0),0);
+  const avg = fs.length ? Math.round(totalApplyRaw/fs.length) : 0;
+
+  // 전화번호 기준 중복 제거 고유 신청자 수
+  const uniqueTels = new Set(
+    members
+      .filter(m => m.tel)
+      .map(m => m.tel.replace(/[^0-9]/g, ''))
+  );
+  // members 데이터가 있으면 고유 수, 없으면 raw 합산
+  const totalApply = uniqueTels.size > 0 ? uniqueTels.size : totalApplyRaw;
+  const attendRate = totalApplyRaw ? Math.round(totalAttend/totalApplyRaw*100) : 0;
+
+  document.getElementById('mTotal').textContent = fs.length+'회';
+  document.getElementById('mSub1').textContent = fs.length ? fs.length+'개 세미나' : '아직 데이터 없음';
+  document.getElementById('mApplyRaw').textContent = totalApplyRaw.toLocaleString()+'명';
+  document.getElementById('mApply').textContent = totalApply.toLocaleString()+'명';
+  const dupCount = totalApplyRaw - totalApply;
+  document.getElementById('mSub2').textContent = dupCount > 0 ? `중복 ${dupCount.toLocaleString()}명 제거` : '';
+  document.getElementById('mAttend').textContent = totalAttend.toLocaleString()+'명';
+  document.getElementById('mSub3').textContent = totalAttend ? '신청자 대비 '+attendRate+'%' : '';
+  const heavyCount = members.filter(m => {
+    const cnt = m.semIds ? m.semIds.length : m.count;
+    return cnt >= 3;
+  }).length;
+  document.getElementById('mHeavy').textContent = heavyCount+'명';
+
+  const wrap = document.getElementById('recentWrap');
+  if (fs.length === 0) {
+    wrap.innerHTML = `<div class="empty-state"><i class="ti ti-calendar-off"></i>아직 등록된 세미나가 없어요</div>`;
+  } else {
+    wrap.innerHTML = `<div style="overflow-x:auto"><table>
+      <thead><tr>
+        <th style="width:14%">날짜</th>
+        <th style="width:25%">세미나명</th>
+        <th style="width:9%">종류</th>
+        <th style="width:10%;text-align:right">신청자</th>
+        <th style="width:12%;text-align:right">최대 참석자</th>
+        <th style="width:14%">강사명</th>
+        <th style="width:16%">결과물</th>
+        <th style="width:8%"></th>
+      </tr></thead>
+      <tbody>${fs.slice(0,100).map(s=>{
+        const d = new Date(s.date);
+        const dstr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+
+        // 결과물 버튼 생성 (여러 링크 지원)
+        const makeResultBtns = (value, icon, label, color) => {
+          if (!value) return '';
+          const links = value.split(',').map(v=>v.trim()).filter(Boolean);
+          return links.map((link, i) => {
+            const isUrl = /^https?:\/\//i.test(link);
+            const btnLabel = links.length > 1 ? `${icon} ${label}${i+1}` : `${icon} ${label}`;
+            return `<button class="small" style="margin:1px;color:${color}" onclick="event.stopPropagation();showLinkPopup('${encodeURIComponent(link)}','${encodeURIComponent(btnLabel)}')">${btnLabel}</button>`;
+          }).join('');
+        };
+
+        const resultBtns = [
+          makeResultBtns(s.resultVideo, '▶', '영상', 'var(--accent)'),
+          makeResultBtns(s.resultFile,  '📄', '교안', '#b45309'),
+          makeResultBtns(s.resultNote,  '📝', '메모', 'var(--text2)'),
+        ].filter(Boolean).join('');
+
+        return `<tr style="cursor:pointer" onclick="toggleResultRow('${s.id}')">
+          <td style="color:var(--text2)">${dstr}</td>
+          <td style="font-weight:500">${s.name}</td>
+          <td><span class="badge b-cat">${s.cat}</span></td>
+          <td style="text-align:right">${s.applied}명</td>
+          <td style="text-align:right;color:#1D9E75;font-weight:500">${s.attended||0}명</td>
+          <td style="color:var(--text2)">${Array.isArray(s.inst)?s.inst.join(', '):(s.inst||'—')}</td>
+          <td onclick="event.stopPropagation()" style="white-space:normal">${resultBtns || '<span style="color:var(--text3)">—</span>'}</td>
+          <td style="white-space:nowrap" onclick="event.stopPropagation()">
+            <button class="small" onclick="editSeminar('${s.id}')" style="margin-right:4px">수정</button>
+            <button class="small" style="color:var(--coral)" onclick="deleteSeminar('${s.id}')">삭제</button>
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+  }
+  updateCharts(fs);
+}
+
+function updateCharts(fs) {
+  // 월별: 해당 월 세미나 참여 members 전화번호 기준 중복제거
+  const byMonth = Array(12).fill(0);
+  for (let mo = 1; mo <= 12; mo++) {
+    const moSems = fs.filter(s => s.month === mo);
+    if (moSems.length === 0) continue;
+    if (members.length > 0) {
+      // members 중 last 날짜가 해당 월인 사람 고유 전화번호 수
+      const tels = new Set(
+        members
+          .filter(m => m.tel && m.last && new Date(m.last).getMonth()+1 === mo)
+          .map(m => m.tel.replace(/[^0-9]/g, ''))
+      );
+      byMonth[mo-1] = tels.size > 0 ? tels.size : moSems.reduce((a,s)=>a+s.applied,0);
+    } else {
+      byMonth[mo-1] = moSems.reduce((a,s)=>a+s.applied,0);
+    }
+  }
+  const cats = allCats();
+  const byCat = cats.map(c=>fs.filter(s=>s.cat===c).reduce((a,s)=>a+s.applied,0));
+
+  if (monthChart) monthChart.destroy();
+  monthChart = new Chart(document.getElementById('cMonth'), {
+    type: 'bar',
+    data: { labels:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+      datasets:[{label:'고유 신청자',data:byMonth,backgroundColor:'#d95f7a',borderRadius:3}] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{grid:{display:false},ticks:{font:{size:9},autoSkip:false,maxRotation:0}},
+        y:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:10}},beginAtZero:true} } }
+  });
+
+  const totalCat = byCat.reduce((a,v)=>a+v,0)||1;
+  document.getElementById('catLegend').innerHTML = cats.map((c,i)=>
+    `<span class="legend-item"><span class="legend-sq" style="background:${CAT_COLORS[i]||'#888'}"></span>${c} ${Math.round(byCat[i]/totalCat*100)}%</span>`).join('');
+
+  if (catChart) catChart.destroy();
+  catChart = new Chart(document.getElementById('cCat'), {
+    type: 'doughnut',
+    data: { labels:cats, datasets:[{data:byCat,backgroundColor:cats.map((_,i)=>CAT_COLORS[i]||'#888'),borderWidth:0}] },
+    options: { responsive:true, maintainAspectRatio:false, cutout:'58%',
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw}명`}}} }
+  });
+}
+
+function renderSeminarTable() {
+  const cat = document.getElementById('sCat').value;
+  const yr = document.getElementById('sYear').value;
+  const list = [...seminars].filter(s=>(cat==='all'||s.cat===cat)&&(yr==='all'||s.year==yr))
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  const wrap = document.getElementById('seminarWrap');
+  if (list.length === 0) {
+    wrap.innerHTML = `<div class="empty-state"><i class="ti ti-calendar-off"></i>등록된 세미나가 없어요</div>`;
+    return;
+  }
+  wrap.innerHTML = `<div style="overflow-x:auto"><table>
+    <thead><tr>
+      <th style="width:24%">세미나명</th><th style="width:12%">날짜</th>
+      <th style="width:9%;text-align:right" title="세미나별 신청자 수 (중복 포함)">신청자 ⓘ</th>
+      <th style="width:12%;text-align:right">최대 참석자</th>
+      <th style="width:16%">강사명</th>
+      <th style="width:11%">결과물</th>
+      <th style="width:8%"></th>
+    </tr></thead>
+    <tbody>${list.map(s=>{
+      const d = new Date(s.date);
+      const dstr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+      return `<tr>
+        <td style="font-weight:500">${s.name}</td>
+        <td style="color:var(--text2)">${dstr}</td>
+        <td style="text-align:right;font-weight:500">${s.applied}</td>
+        <td style="text-align:right;color:#1D9E75;font-weight:500">${s.attended||0}</td>
+        <td style="color:var(--text2)">${Array.isArray(s.inst)?s.inst.join(', '):(s.inst||'—')}</td>
+        <td>${(s.resultVideo||s.resultFile||s.resultNote)
+          ? `<span style="display:flex;gap:4px;flex-wrap:wrap">
+              ${s.resultVideo?`<a href="${s.resultVideo}" target="_blank" style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--primary-light);color:var(--primary-dark);text-decoration:none;font-weight:600">▶ 영상</a>`:''}
+              ${s.resultFile?`<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--amber-light);color:var(--amber);font-weight:600">📄 교안</span>`:''}
+              ${s.resultNote?`<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--green-light);color:var(--green);font-weight:600">📝 메모</span>`:''}
+            </span>`
+          : '<span style="font-size:11px;color:var(--text3)">—</span>'
+        }</td>
+        <td style="display:flex;gap:4px"><button class="small" onclick="editSeminar('${s.id}')">수정</button><button class="small" style="color:var(--coral)" onclick="deleteSeminar('${s.id}')">삭제</button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function renderMemberTable() {
+  const tier = document.getElementById('mTier').value;
+  const interest = document.getElementById('mInt').value;
+  const list = members.filter(m=>(tier==='all'||m.tier===tier)&&(interest==='all'||m.interest===interest))
+    .sort((a,b)=>b.count-a.count);
+  const wrap = document.getElementById('memberWrap');
+  if (list.length === 0) {
+    wrap.innerHTML = `<div class="empty-state"><i class="ti ti-users-off"></i>해당하는 참여자가 없어요</div>`;
+    return;
+  }
+  wrap.innerHTML = `<div style="overflow-x:auto"><table>
+    <thead><tr>
+      <th style="width:13%">회원ID</th><th style="width:11%">이름</th><th style="width:19%">연락처</th>
+      <th style="width:8%;text-align:center">참여</th><th style="width:16%">마지막 참여</th>
+      <th style="width:12%">관심분야</th><th style="width:9%">등급</th><th style="width:12%"></th>
+    </tr></thead>
+    <tbody>${list.map(m=>`<tr>
+      <td style="color:var(--text2)">${m.id}</td>
+      <td style="font-weight:500">${m.name}</td>
+      <td>${m.tel}</td>
+      <td style="text-align:center;font-weight:500">${m.count}회</td>
+      <td style="color:var(--text2)">${m.last}</td>
+      <td><span class="badge b-cat">${m.interest}</span></td>
+      <td><span class="badge ${m.tier==='hot'?'b-hot':m.tier==='warm'?'b-warm':'b-new'}">${m.tier==='hot'?'핵심':m.tier==='warm'?'단골':'신규'}</span></td>
+      <td style="display:flex;gap:4px"><button class="small" onclick="copyContact('${m.name}','${m.tel}')"><i class="ti ti-copy" aria-hidden="true"></i> 복사</button><button class="small" onclick="editMember('${m.id}')">수정</button><button class="small" style="color:var(--coral)" onclick="deleteMember('${m.id}')">삭제</button></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+
+
+// ── 세미나 수정 ───────────────────────────────────────────
+let editingSemId = null;
+
+function editSeminar(semId) {
+  const sem = seminars.find(s=>s.id===semId);
+  if (!sem) return;
+  editingSemId = semId;
+
+  // 데이터 입력 탭으로 이동
+  showSection('add', document.querySelectorAll('.nav')[3]);
+
+  // 폼 채우기
+  document.getElementById('fSemName').value    = sem.name;
+  document.getElementById('fSemDate').value    = sem.date;
+  document.getElementById('fSemCat').value     = sem.cat;
+  document.getElementById('fSemApplied').value = sem.applied || '';
+
+  // 강사 목록 복원
+  const instArr = Array.isArray(sem.inst) ? sem.inst : (sem.inst ? sem.inst.split(', ') : []);
+  window._instItems = [...instArr];
+  renderInstList();
+
+  // UI 수정 모드로 전환
+  document.getElementById('semFormLabel').textContent = '세미나 수정';
+  document.getElementById('semSubmitBtn').textContent = '수정 완료';
+  document.getElementById('semCancelEdit').style.display = 'inline-block';
+
+  // 폼 상단으로 스크롤
+  document.getElementById('fSemName').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function cancelEditSeminar() {
+  editingSemId = null;
+  window._instItems = [];
+  renderInstList();
+  document.getElementById('fSemName').value    = '';
+  document.getElementById('fSemDate').value    = '';
+  document.getElementById('fSemCat').value     = '';
+  document.getElementById('fSemApplied').value = '';
+  document.getElementById('semFormLabel').textContent = '새 세미나 등록';
+  document.getElementById('semSubmitBtn').textContent = '세미나 등록';
+  document.getElementById('semCancelEdit').style.display = 'none';
+}
+
+// ── 세미나 등록 함수 수정 모드 대응 ──────────────────────────
+const _origAddSeminar = window.addSeminar;
+
+// ── 참여자 수정 ───────────────────────────────────────────
+function editMember(memId) {
+  const mem = members.find(m=>m.id===memId);
+  if (!mem) return;
+  document.getElementById('editMemId').value    = mem.id;
+  document.getElementById('editMemName').value  = mem.name;
+  document.getElementById('editMemTel').value   = mem.tel;
+  document.getElementById('editMemInt').value   = mem.interest;
+  document.getElementById('editMemCount').value = mem.count;
+  document.getElementById('memberEditModal').style.display = 'flex';
+}
+
+function closeMemberEditModal() {
+  document.getElementById('memberEditModal').style.display = 'none';
+}
+
+function saveMemberEdit() {
+  const memId = document.getElementById('editMemId').value;
+  const mem   = members.find(m=>m.id===memId);
+  if (!mem) return;
+  mem.name     = document.getElementById('editMemName').value.trim() || mem.name;
+  mem.tel      = document.getElementById('editMemTel').value.trim()  || mem.tel;
+  mem.interest = document.getElementById('editMemInt').value;
+  mem.count    = parseInt(document.getElementById('editMemCount').value)||mem.count;
+  mem.tier     = mem.count>=5?'hot':mem.count>=3?'warm':'new';
+  saveToStorage();
+  closeMemberEditModal();
+  renderMemberTable();
+  applyFilters();
+  showToast(`"${mem.name}" 정보가 수정됐어요`);
+}
+
+function deleteSeminar(semId) {
+  const sem = seminars.find(s=>s.id===semId);
+  if (!sem) return;
+  if (!confirm(`"${sem.name}" 세미나를 삭제할까요?\n관련 일정 데이터도 함께 삭제돼요.`)) return;
+  seminars = seminars.filter(s=>s.id!==semId);
+  delete schedules[semId];
+  saveToStorage();
+  refreshFilters();
+  applyFilters();
+  renderSeminarTable();
+  populateSeminarSelect();
+  showToast(`"${sem.name}" 삭제됐어요`);
+}
+
+function clearAllMembers() {
+  if (!confirm(`참여자 ${members.length}명을 전체 삭제할까요?\n세미나 데이터는 그대로 유지돼요.`)) return;
+  members = [];
+  saveToStorage();
+  renderMemberTable();
+  applyFilters();
+  showToast('참여자 데이터가 초기화됐어요');
+}
+
+function deleteMember(memId) {
+  const mem = members.find(m=>m.id===memId);
+  if (!mem) return;
+  if (!confirm(`"${mem.name}" 참여자를 삭제할까요?`)) return;
+  members = members.filter(m=>m.id!==memId);
+  saveToStorage();
+  renderMemberTable();
+  applyFilters();
+  showToast(`"${mem.name}" 삭제됐어요`);
+}
+
+function copyContact(name, tel) {
+  navigator.clipboard.writeText(`${name} ${tel}`).then(()=>showToast(`${name} 연락처 복사됨`));
+}
+
+function populateSeminarSelect() {
+  populateXlsSemSelect();
+  populateResultSemSelect();
+  // fMemSem은 삭제된 요소이므로 skip
+}
+
+function showToast(msg) {
+  // toast-ok가 현재 탭에 없을 수 있으므로 전역 토스트 사용
+  let t = document.getElementById('global-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'global-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c1c1a;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
+  // 기존 toast-ok도 함께 업데이트
+  const t2 = document.getElementById('toast-ok');
+  if (t2) { t2.textContent = msg; t2.style.display = 'block'; setTimeout(()=>t2.style.display='none', 2500); }
+}
+
+function addSeminar() {
+  const name = document.getElementById('fSemName').value.trim();
+  const date = document.getElementById('fSemDate').value;
+  const cat  = document.getElementById('fSemCat').value;
+  const inst    = window._instItems ? window._instItems.join(', ') : '';
+  const applied = parseInt(document.getElementById('fSemApplied').value)||0;
+  if (!name||!date||!cat) { showToast('세미나명, 날짜, 종류는 필수예요'); return; }
+
+  if (editingSemId) {
+    // ── 수정 모드 ──
+    const sem = seminars.find(s => s.id === editingSemId);
+    if (sem) {
+      const d  = new Date(date);
+      sem.name    = name;
+      sem.date    = date;
+      sem.year    = d.getFullYear();
+      sem.month   = d.getMonth() + 1;
+      sem.cat     = cat;
+      sem.inst    = inst;
+      if (applied > 0) sem.applied = applied;
+      seminars.sort((a,b) => b.date.localeCompare(a.date));
+      saveToStorage();
+      refreshFilters();
+      applyFilters();
+      renderSeminarTable();
+      populateSeminarSelect();
+      showToast('"' + name + '" 수정 완료!');
+    }
+    cancelEditSeminar();
+    return;
+  }
+
+  // ── 신규 등록 ──
+  const d = new Date(date);
+  const newId = 'SEM-' + String(Date.now()).slice(-6);
+  seminars.push({id:newId, name, date, year:d.getFullYear(), month:d.getMonth()+1, cat, inst, applied, attended:0});
+  seminars.sort((a,b) => b.date.localeCompare(a.date));
+  document.getElementById('fSemName').value = '';
+  document.getElementById('fSemDate').value = '';
+  document.getElementById('fSemCat').value    = '';
+  document.getElementById('fSemApplied').value = '';
+  window._instItems = [];
+  renderInstList();
+  refreshFilters();
+  saveToStorage();
+  showToast('"' + name + '" 등록 완료!');
+  populateSeminarSelect();
+  applyFilters();
+}
+
+function exportData() {
+  const data = JSON.stringify({seminars,members,schedules},null,2);
+  const blob = new Blob([data],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'seminar_data_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const raw = ev.target.result;
+      if (!raw || raw.trim() === '') { showToast('파일이 비어있어요'); return; }
+      const data = JSON.parse(raw);
+
+      // 데이터 유효성 확인
+      if (!data.seminars && !data.members) {
+        showToast('올바른 백업 파일이 아니에요. 대시보드에서 내보낸 JSON 파일을 사용해 주세요');
+        return;
+      }
+
+      if (data.seminars)  seminars  = data.seminars;
+      if (data.members)   members   = data.members;
+      if (data.schedules) schedules = data.schedules;
+
+      // 전체 UI 갱신
+      saveToStorage();
+      refreshFilters();
+      applyFilters();
+      // 달력도 갱신
+      if (document.getElementById('calGrid')) renderCalendar();
+      // 열려있는 탭에 따라 추가 갱신
+      if (document.getElementById('sec-seminars').style.display !== 'none') renderSeminarTable();
+      if (document.getElementById('sec-members').style.display !== 'none') renderMemberTable();
+
+      showToast('✅ 불러오기 완료! ' + seminars.length + '개 세미나, ' + members.length + '명 참여자');
+    } catch(err) {
+      console.error('불러오기 오류:', err);
+      showToast('❌ 파일을 읽을 수 없어요. JSON 형식인지 확인해 주세요. (' + err.message + ')');
+    }
+  };
+  reader.onerror = () => showToast('❌ 파일 읽기 실패. 다시 시도해 주세요');
+  reader.readAsText(file, 'UTF-8');
+}
+
+
+// ── 달력 & 일정 ──────────────────────────────────────────
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let activeSeminarId = null;
+let editingMsgIdx = null;
+
+
+const DEFAULT_CHECKLIST = [
+  { label:'교안 수령',     done:false },
+  { label:'SB 작성',      done:false },
+  { label:'디자인 완료',   done:false },
+  { label:'모집페이지 오픈', done:false },
+  { label:'리허설',        done:false },
+  { label:'줌링크 확인',   done:false },
+];
+const DEFAULT_MESSAGES = [
+  { type:'홍보',    label:'1차 홍보',       channel:'카톡', body:'', date:'' },
+  { type:'홍보',    label:'2차 홍보',       channel:'카톡', body:'', date:'' },
+  { type:'리마인드', label:'리마인드',       channel:'문자', body:'', date:'' },
+  { type:'링크',    label:'줌링크 발송',     channel:'카톡', body:'', date:'' },
+  { type:'영상',    label:'다시보기 영상 발송', channel:'카톡', body:'', date:'' },
+];
+
+function getSchedule(semId) {
+  if (!schedules[semId]) {
+    schedules[semId] = {
+      checklist: DEFAULT_CHECKLIST.map((c,i) => ({ id:'c'+i, label:c.label, date:'', done:false })),
+      messages:  DEFAULT_MESSAGES.map((m,i)  => ({ id:'m'+i, type:m.type, label:m.label, channel:m.channel, body:m.body, date:m.date, done:false }))
+    };
+  }
+  return schedules[semId];
+}
+
+function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+
+function renderCalendar() {
+  if (!document.getElementById('calGrid')) return;
+  const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('calTitle').textContent = `${calYear}년 ${months[calMonth]}`;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const firstDay   = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth= new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+  // 이벤트 맵 수집
+  const evMap = {};
+  seminars.forEach(sem => {
+    const sc = getSchedule(sem.id);
+    addEv(evMap, sem.date, sem.name, 'seminar', sem.id);
+    sc.checklist.forEach(c => { if(c.date) addEv(evMap, c.date, c.label, c.label.includes('리허설')?'rehearse':'prep', sem.id); });
+    sc.messages.forEach(m  => { if(m.date) addEv(evMap, m.date, `${m.label}`, 'msg', sem.id); });
+  });
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  let cells = [];
+  for (let i=firstDay-1; i>=0; i--) cells.push({day:daysInPrev-i, month:'prev'});
+  for (let d=1; d<=daysInMonth; d++) cells.push({day:d, month:'cur'});
+  let nxt=1; while(cells.length%7!==0) cells.push({day:nxt++, month:'next'});
+
+  cells.forEach(cell => {
+    const el = document.createElement('div');
+    el.className = 'cal-day' + (cell.month!=='cur' ? ' other-month' : '');
+    let dateStr = '';
+    if (cell.month === 'cur') {
+      const d = new Date(calYear, calMonth, cell.day); d.setHours(0,0,0,0);
+      dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(cell.day).padStart(2,'0')}`;
+      if (d.getTime()===today.getTime()) el.classList.add('today');
+      el.onclick = () => openDayPanel(dateStr);
+    }
+    el.innerHTML = `<div class="cal-num">${cell.day}</div>`;
+    if (dateStr && evMap[dateStr]) {
+      evMap[dateStr].slice(0,3).forEach(ev => {
+        const s = document.createElement('div');
+        s.className = `cal-event ev-${ev.type}`;
+        s.textContent = ev.label;
+        s.onclick = () => openDayPanel(dateStr);
+        el.appendChild(s);
+      });
+      if (evMap[dateStr].length>3) {
+        const m = document.createElement('div');
+        m.style.cssText='font-size:10px;color:var(--text3);padding:1px 5px';
+        m.textContent=`+${evMap[dateStr].length-3}개 더`;
+        el.appendChild(m);
+      }
+    }
+    grid.appendChild(el);
+  });
+}
+
+function addEv(map,date,label,type,semId) {
+  if(!date) return;
+  if(!map[date]) map[date]=[];
+  map[date].push({label,type,semId});
+}
+
+// ── 날짜 클릭 패널 ─────────────────────────────────────────
+let activeDateStr = '';
+
+function openDayPanel(dateStr) {
+  activeDateStr = dateStr;
+  hideInlineForm('prep');
+  hideInlineForm('msg');
+
+  const d = new Date(dateStr);
+  const weekdays = ['일','월','화','수','목','금','토'];
+  document.getElementById('dayPanelTitle').textContent =
+    `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${weekdays[d.getDay()]})`;
+
+  refreshDayPanel();
+  document.getElementById('dayPanel').style.display = 'block';
+  document.getElementById('scheduleDetail').style.display = 'none';
+  document.getElementById('dayPanel').scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  // 세미나 선택 드롭다운 채우기
+  const semOpts = seminars.length
+    ? '<option value="">세미나 선택</option>' + [...seminars].sort((a,b)=>b.date.localeCompare(a.date)).map(s=>`<option value="${s.id}">${s.date} · ${s.name}</option>`).join('')
+    : '<option value="">먼저 세미나를 등록해 주세요</option>';
+  document.getElementById('iPrepSem').innerHTML = semOpts;
+  document.getElementById('iMsgSem').innerHTML  = semOpts;
+}
+
+function refreshDayPanel() {
+  if (!document.getElementById('dayPanelContent')) return;
+  const dateStr = activeDateStr;
+  const typeColor = {'홍보':'ev-seminar','리마인드':'ev-msg','링크':'ev-rehearse','영상':'ev-prep','기타':'b-new'};
+  let html = '';
+
+  // 세미나 당일
+  const todaySems = seminars.filter(s=>s.date===dateStr);
+  if (todaySems.length) {
+    todaySems.forEach(s => {
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--primary-light);border-radius:var(--radius);margin-bottom:8px">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0"></span>
+        <span style="font-size:13px;font-weight:600;color:var(--primary-dark)">🎤 세미나 당일 — ${s.name}</span>
+        <button class="small" style="margin-left:auto" onclick="openDetail('${s.id}')">전체 보기</button>
+      </div>`;
+    });
+  }
+
+  // 준비 항목
+  let prepItems=[], msgItems=[];
+  seminars.forEach(sem => {
+    const sc = getSchedule(sem.id);
+    sc.checklist.forEach((c,ci) => { if(c.date===dateStr) prepItems.push({sem,c,ci}); });
+    sc.messages.forEach((m,mi)  => { if(m.date===dateStr) msgItems.push({sem,m,mi}); });
+  });
+
+  if (prepItems.length) {
+    html += `<div class="sec-label" style="margin:12px 0 8px">✅ 준비 항목</div>`;
+    prepItems.forEach(({sem,c,ci}) => {
+      html += `<div class="checklist-item">
+        <input type="checkbox" ${c.done?'checked':''} onchange="toggleCheckById('${sem.id}',${ci},this.checked)">
+        <span class="ci-label ${c.done?'done':''}" onclick="editCheckItem('${sem.id}',${ci})" style="cursor:pointer;flex:1">${c.label}</span>
+        <span style="font-size:11px;color:var(--text3)">${sem.name}</span>
+        <button class="small" onclick="editCheckItem('${sem.id}',${ci})" style="font-size:10px;padding:2px 6px">수정</button>
+        <span class="ci-del" onclick="deleteCheckById('${sem.id}',${ci})">✕</span>
+      </div>`;
+    });
+  }
+
+  if (msgItems.length) {
+    html += `<div class="sec-label" style="margin:14px 0 8px">📨 발송 일정</div>`;
+    msgItems.forEach(({sem,m,mi}) => {
+      html += `<div style="border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:${m.body?'8':'0'}px">
+          <span class="badge ${typeColor[m.type]||'b-new'}">${m.type}</span>
+          <span style="font-size:13px;font-weight:600">${m.label}</span>
+          <span style="font-size:11px;color:var(--text3)">${m.channel} · ${sem.name}</span>
+          <button class="small" style="margin-left:auto" onclick="openEditMsgInline('${sem.id}',${mi})">✏️ 수정</button>
+          <span class="ci-del" onclick="deleteMsgById('${sem.id}',${mi})">✕</span>
+        </div>
+        ${m.body
+          ? `<div style="font-size:12px;background:var(--bg2);border-radius:6px;padding:10px 12px;white-space:pre-wrap;line-height:1.7;color:var(--text)">${escHtml(m.body)}</div>`
+          : `<div style="font-size:12px;color:var(--text3);font-style:italic">본문 없음 — 수정 버튼으로 추가해 주세요</div>`
+        }
+      </div>`;
+    });
+  }
+
+  if (!todaySems.length && !prepItems.length && !msgItems.length) {
+    html = `<div style="text-align:center;padding:1.5rem 0;color:var(--text3);font-size:13px">
+      <i class="ti ti-calendar-off" style="font-size:28px;display:block;margin-bottom:8px"></i>
+      이 날에 예정된 일정이 없어요<br>아래에서 바로 추가해 보세요
+    </div>`;
+  }
+
+  document.getElementById('dayPanelContent').innerHTML = html;
+}
+
+function showInlineForm(type) {
+  document.getElementById('inlinePrepForm').style.display = type==='prep' ? 'block' : 'none';
+  document.getElementById('inlineMsgForm').style.display  = type==='msg'  ? 'block' : 'none';
+  if (type==='prep') { document.getElementById('iPrepLabel').value=''; document.getElementById('iPrepLabel').focus(); }
+  if (type==='msg')  { document.getElementById('iMsgLabel').value=''; document.getElementById('iMsgBody').value=''; document.getElementById('iMsgLabel').focus(); }
+}
+function hideInlineForm(type) {
+  if (type==='prep') document.getElementById('inlinePrepForm').style.display='none';
+  if (type==='msg')  document.getElementById('inlineMsgForm').style.display='none';
+}
+
+function saveInlinePrep() {
+  const semId = document.getElementById('iPrepSem').value;
+  const label = document.getElementById('iPrepLabel').value.trim();
+  if (!semId) { showToast('세미나를 선택해 주세요'); return; }
+  if (!label) { showToast('항목 이름을 입력해 주세요'); return; }
+  const sc = getSchedule(semId);
+  sc.checklist.push({ id:'c'+Date.now(), label, date:activeDateStr, done:false });
+  saveToStorage();
+  hideInlineForm('prep');
+  refreshDayPanel();
+  renderCalendar();
+  showToast('준비 항목이 추가됐어요!');
+}
+
+function saveInlineMsg() {
+  const semId   = document.getElementById('iMsgSem').value;
+  const label   = document.getElementById('iMsgLabel').value.trim();
+  const type    = document.getElementById('iMsgType').value;
+  const channel = document.getElementById('iMsgChannel').value;
+  const body    = document.getElementById('iMsgBody').value;
+  if (!semId) { showToast('세미나를 선택해 주세요'); return; }
+  if (!label) { showToast('제목을 입력해 주세요'); return; }
+  const sc = getSchedule(semId);
+  sc.messages.push({ id:'m'+Date.now(), type, label, channel, body, date:activeDateStr, done:false });
+  saveToStorage();
+  hideInlineForm('msg');
+  refreshDayPanel();
+  renderCalendar();
+  showToast('발송 일정이 추가됐어요!');
+}
+
+function deleteCheckById(semId, ci) {
+  const sc = getSchedule(semId);
+  sc.checklist.splice(ci,1); saveToStorage();
+  refreshDayPanel(); renderCalendar();
+}
+function deleteMsgById(semId, mi) {
+  const sc = getSchedule(semId);
+  sc.messages.splice(mi,1); saveToStorage();
+  refreshDayPanel(); renderCalendar();
+}
+function openEditMsgInline(semId, mi) {
+  activeSeminarId = semId;
+  editingMsgIdx   = mi;
+  const m = getSchedule(semId).messages[mi];
+  document.getElementById('msgModalTitle').textContent='발송 내용 수정';
+  document.getElementById('mLabel').value   = m.label;
+  document.getElementById('mDate').value    = m.date||'';
+  document.getElementById('mType').value    = m.type;
+  document.getElementById('mChannel').value = m.channel;
+  document.getElementById('mBody').value    = m.body||'';
+  document.getElementById('msgModal').style.display='flex';
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── 세미나 전체 일정 상세 ──────────────────────────────────
+function openDetail(semId) {
+  activeSeminarId = semId;
+  const sem = seminars.find(s=>s.id===semId);
+  if(!sem) return;
+  const sc = getSchedule(semId);
+  document.getElementById('detailTitle').textContent = sem.name;
+  document.getElementById('detailMeta').textContent = `${sem.date} · ${sem.cat}${sem.inst?(Array.isArray(sem.inst)?' · '+sem.inst.join(', '):(sem.inst?(' · '+sem.inst):'')):''} · 신청 ${sem.applied}명`;
+  // 결과물 표시
+  let resHtml = '';
+  if (sem.resultVideo||sem.resultFile||sem.resultNote) {
+    resHtml = `<div style="margin-top:10px;padding:10px 12px;background:var(--bg2);border-radius:var(--radius);font-size:12px;line-height:1.8">`;
+    if (sem.resultVideo) resHtml += `<div>▶ <a href="${sem.resultVideo}" target="_blank" style="color:var(--primary-dark)">다시보기 영상</a></div>`;
+    if (sem.resultFile)  resHtml += `<div>📄 교안: ${escHtml(sem.resultFile)}</div>`;
+    if (sem.resultNote)  resHtml += `<div>📝 ${escHtml(sem.resultNote)}</div>`;
+    resHtml += `</div>`;
+  }
+  const metaEl = document.getElementById('detailMeta');
+  metaEl.innerHTML = metaEl.textContent + resHtml;
+  renderChecklist(sc);
+  renderMessages(sc);
+  document.getElementById('scheduleDetail').style.display='block';
+  document.getElementById('dayPanel').style.display='none';
+  document.getElementById('scheduleDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function renderChecklist(sc) {
+  if (!document.getElementById('checklistWrap')) return;
+  document.getElementById('checklistWrap').innerHTML = sc.checklist.map((c,i) => `
+    <div class="checklist-item">
+      <input type="checkbox" ${c.done?'checked':''} onchange="toggleCheck(${i},this.checked)">
+      <span class="ci-label ${c.done?'done':''}" style="flex:1">${c.label}</span>
+      <span class="ci-date">${c.date||'날짜 미정'}</span>
+      <button class="small" onclick="editCheckInDetail(${i})" style="font-size:10px;padding:2px 6px">수정</button>
+      <span class="ci-del" onclick="deleteCheck(${i})">✕</span>
+    </div>`).join('') || '<div style="font-size:13px;color:var(--text3);padding:8px 0">항목이 없어요</div>';
+}
+
+function renderMessages(sc) {
+  if (!document.getElementById('msgWrap')) return;
+  const typeColor = {'홍보':'ev-seminar','리마인드':'ev-msg','링크':'ev-rehearse','영상':'ev-prep','기타':'b-new'};
+  document.getElementById('msgWrap').innerHTML = sc.messages.map((m,i) => `
+    <div style="border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${m.body?'8':'0'}px">
+        <span class="badge ${typeColor[m.type]||'b-new'}">${m.type}</span>
+        <span style="font-size:13px;font-weight:600">${m.label}</span>
+        <span style="font-size:11px;color:var(--text3)">${m.channel} · ${m.date||'날짜 미정'}</span>
+        <button class="small" style="margin-left:auto" onclick="openEditMsg(activeSeminarId,${i})">수정</button>
+        <span class="ci-del" onclick="deleteMsg(${i})">✕</span>
+      </div>
+      ${m.body ? `<div style="font-size:12px;background:var(--bg2);border-radius:6px;padding:8px 10px;white-space:pre-wrap;line-height:1.7;color:var(--text);margin-top:4px">${escHtml(m.body)}</div>` : ''}
+    </div>`).join('') || '<div style="font-size:13px;color:var(--text3);padding:8px 0">발송 일정이 없어요</div>';
+}
+
+
+function editCheckItem(semId, ci) {
+  const sc = getSchedule(semId);
+  const c  = sc.checklist[ci];
+  if (!c) return;
+  const newLabel = prompt('항목 이름', c.label);
+  if (newLabel === null) return;
+  const newDate  = prompt('날짜 (YYYY-MM-DD)', c.date||'');
+  if (newDate === null) return;
+  c.label = newLabel.trim() || c.label;
+  c.date  = newDate.trim();
+  saveToStorage();
+  refreshDayPanel();
+  renderCalendar();
+}
+
+function editCheckInDetail(i) {
+  const sc = schedules[activeSeminarId];
+  if (!sc) return;
+  const c = sc.checklist[i];
+  if (!c) return;
+  const newLabel = prompt('항목 이름', c.label);
+  if (newLabel === null) return;
+  const newDate  = prompt('날짜 (YYYY-MM-DD)', c.date||'');
+  if (newDate === null) return;
+  c.label = newLabel.trim() || c.label;
+  c.date  = newDate.trim();
+  saveToStorage();
+  renderChecklist(sc);
+  renderCalendar();
+}
+
+function toggleCheck(i,val) {
+  const sc=schedules[activeSeminarId]; if(!sc) return;
+  sc.checklist[i].done=val; saveToStorage(); renderChecklist(sc);
+}
+function toggleCheckById(semId,i,val) {
+  const sc=getSchedule(semId); sc.checklist[i].done=val;
+}
+function deleteCheck(i) {
+  const sc=schedules[activeSeminarId]; if(!sc) return;
+  sc.checklist.splice(i,1); saveToStorage(); renderChecklist(sc); renderCalendar();
+}
+function deleteMsg(i) {
+  const sc=schedules[activeSeminarId]; if(!sc) return;
+  sc.messages.splice(i,1); saveToStorage(); renderMessages(sc); renderCalendar();
+}
+
+// ── 발송 모달 ──────────────────────────────────────────────
+function openEditMsg(semId, idx) {
+  activeSeminarId = semId;
+  editingMsgIdx   = idx;
+  const sc = getSchedule(semId);
+  const m  = sc.messages[idx];
+  document.getElementById('msgModalTitle').textContent = '발송 내용 수정';
+  document.getElementById('mLabel').value   = m.label;
+  document.getElementById('mDate').value    = m.date||'';
+  document.getElementById('mType').value    = m.type;
+  document.getElementById('mChannel').value = m.channel;
+  document.getElementById('mBody').value    = m.body||'';
+  const modal = document.getElementById('msgModal');
+  modal.style.display='flex';
+}
+function openAddMsgModal() {
+  editingMsgIdx = null;
+  document.getElementById('msgModalTitle').textContent='발송 일정 추가';
+  ['mLabel','mDate','mBody'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mType').value='홍보';
+  document.getElementById('mChannel').value='카톡';
+  document.getElementById('msgModal').style.display='flex';
+}
+function closeMsgModal() { document.getElementById('msgModal').style.display='none'; }
+function saveMsgModal() {
+  const label   = document.getElementById('mLabel').value.trim();
+  const date    = document.getElementById('mDate').value;
+  const type    = document.getElementById('mType').value;
+  const channel = document.getElementById('mChannel').value;
+  const body    = document.getElementById('mBody').value;
+  if(!label){showToast('제목을 입력해 주세요'); return;}
+  const sc=getSchedule(activeSeminarId);
+  if(editingMsgIdx!==null) {
+    Object.assign(sc.messages[editingMsgIdx],{label,date,type,channel,body});
+  } else {
+    sc.messages.push({id:'m'+Date.now(),type,label,channel,body,date,done:false});
+  }
+  saveToStorage();
+  closeMsgModal();
+  if (document.getElementById('dayPanel').style.display!=='none') refreshDayPanel();
+  else renderMessages(sc);
+  renderCalendar();
+}
+
+// ── 체크 모달 ──────────────────────────────────────────────
+function openAddCheckModal() {
+  document.getElementById('cLabel').value='';
+  document.getElementById('cDate').value='';
+  document.getElementById('checkModal').style.display='flex';
+}
+function closeCheckModal() { document.getElementById('checkModal').style.display='none'; }
+function saveCheckModal() {
+  const label=document.getElementById('cLabel').value.trim();
+  const date =document.getElementById('cDate').value;
+  if(!label){showToast('항목 이름을 입력해 주세요'); return;}
+  const sc=getSchedule(activeSeminarId);
+  sc.checklist.push({id:'c'+Date.now(),label,date,done:false});
+  saveToStorage();
+  closeCheckModal();
+  renderChecklist(sc);
+  renderCalendar();
+}
+
+
+// ── 일정 빠른 추가 ────────────────────────────────────────
+let qaCurrentTab = 'prep';
+
+
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('✅ 복사됐어요!'))
+      .catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  // 로컬 파일에서도 작동하는 복사 방법
+  const el = document.createElement('textarea');
+  el.value = text;
+  el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+  document.body.appendChild(el);
+  el.focus();
+  el.select();
+  try {
+    document.execCommand('copy');
+    showToast('✅ 복사됐어요!');
+  } catch {
+    showToast('❌ 복사 실패 — 직접 선택해서 복사해 주세요');
+  }
+  document.body.removeChild(el);
+}
+
+function toggleResultRow(semId) {
+  const row = document.getElementById('result-row-' + semId);
+  if (!row) return;
+  const isOpen = row.style.display !== 'none';
+  // 다른 열린 것들 닫기
+  document.querySelectorAll('[id^="result-row-"]').forEach(r => r.style.display = 'none');
+  if (!isOpen) row.style.display = 'table-row';
+}
+
+function editResultDirect(semId) {
+  // 데이터 입력 탭으로 이동 후 해당 세미나 선택
+  showSection('add', document.querySelectorAll('.nav')[3]);
+  setTimeout(() => {
+    const sel = document.getElementById('fResultSem');
+    if (sel) { sel.value = semId; loadResult(semId); }
+    document.getElementById('fResultSem')?.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 100);
+}
+
+function toggleQuickAdd() {
+  const panel = document.getElementById('quickAddPanel');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  if (isOpen) {
+    closeQuickAdd();
+  } else {
+    panel.style.display = 'block';
+    populateQaSemSelect();
+    document.getElementById('qaDate').value = '';
+    document.getElementById('qaPrepLabel').value = '';
+    document.getElementById('qaMsgLabel').value = '';
+    document.getElementById('qaMsgBody').value = '';
+    switchQaTab('prep');
+    panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+}
+
+function closeQuickAdd() {
+  const panel = document.getElementById('quickAddPanel');
+  if (panel) panel.style.display = 'none';
+}
+
+function populateQaSemSelect() {
+  const sel = document.getElementById('qaSem');
+  if (!sel) return;
+  sel.innerHTML = seminars.length
+    ? '<option value="">선택하세요</option>' +
+      [...seminars].sort((a,b)=>b.date.localeCompare(a.date))
+      .map(s=>`<option value="${s.id}">${s.date} · ${s.name}</option>`).join('')
+    : '<option value="">먼저 세미나를 등록해 주세요</option>';
+}
+
+function switchQaTab(tab) {
+  qaCurrentTab = tab;
+  const prepBtn  = document.getElementById('qaTabPrep');
+  const msgBtn   = document.getElementById('qaTabMsg');
+  const prepForm = document.getElementById('qaFormPrep');
+  const msgForm  = document.getElementById('qaFormMsg');
+  if (!prepBtn || !msgBtn) return;
+  if (tab === 'prep') {
+    prepBtn.style.cssText += ';background:var(--primary);color:#fff;border-color:var(--primary)';
+    msgBtn.style.cssText  += ';background:var(--bg);color:var(--text2);border-color:var(--border2)';
+    if (prepForm) prepForm.style.display = 'block';
+    if (msgForm)  msgForm.style.display  = 'none';
+  } else {
+    msgBtn.style.cssText  += ';background:var(--primary);color:#fff;border-color:var(--primary)';
+    prepBtn.style.cssText += ';background:var(--bg);color:var(--text2);border-color:var(--border2)';
+    if (prepForm) prepForm.style.display = 'none';
+    if (msgForm)  msgForm.style.display  = 'block';
+  }
+}
+
+function setPrepLabel(label) {
+  const el = document.getElementById('qaPrepLabel');
+  if (el) el.value = label;
+}
+
+function setMsgPreset(label, type, channel) {
+  const lEl = document.getElementById('qaMsgLabel');
+  const tEl = document.getElementById('qaMsgType');
+  const cEl = document.getElementById('qaMsgChannel');
+  if (lEl) lEl.value = label;
+  if (tEl) tEl.value = type;
+  if (cEl) cEl.value = channel;
+}
+
+function saveQuickAdd() {
+  const semId = document.getElementById('qaSem').value;
+  const date  = document.getElementById('qaDate').value;
+  if (!semId) { showToast('세미나를 선택해 주세요'); return; }
+  if (!date)  { showToast('날짜를 선택해 주세요'); return; }
+  const sc = getSchedule(semId);
+
+  if (qaCurrentTab === 'prep') {
+    const label = document.getElementById('qaPrepLabel').value.trim();
+    if (!label) { showToast('항목 이름을 입력하거나 위에서 선택해 주세요'); return; }
+    sc.checklist.push({ id:'c'+Date.now(), label, date, done:false });
+    document.getElementById('qaPrepLabel').value = '';
+    showToast('✅ "' + label + '" 추가 완료!');
+  } else {
+    const label   = document.getElementById('qaMsgLabel').value.trim();
+    const type    = document.getElementById('qaMsgType').value;
+    const channel = document.getElementById('qaMsgChannel').value;
+    const body    = document.getElementById('qaMsgBody').value;
+    if (!label) { showToast('제목을 입력하거나 위에서 선택해 주세요'); return; }
+    sc.messages.push({ id:'m'+Date.now(), type, label, channel, body, date, done:false });
+    document.getElementById('qaMsgLabel').value = '';
+    document.getElementById('qaMsgBody').value  = '';
+    showToast('📨 "' + label + '" 발송 일정 추가 완료!');
+  }
+
+  saveToStorage();
+  renderCalendar();
+  if (activeDateStr === date && document.getElementById('dayPanel') &&
+      document.getElementById('dayPanel').style.display !== 'none') {
+    refreshDayPanel();
+  }
+}
+
+// 시작 시 저장된 데이터 불러오기
+
+// ── 강사 목록 관리 ───────────────────────────────────────
+window._instItems = [];
+
+function addInstItem() {
+  const input = document.getElementById('fSemInstInput');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  window._instItems.push(val);
+  input.value = '';
+  renderInstList();
+  input.focus();
+}
+
+function removeInstItem(i) {
+  window._instItems.splice(i, 1);
+  renderInstList();
+}
+
+function renderInstList() {
+  const wrap = document.getElementById('instList');
+  if (!wrap) return;
+  wrap.innerHTML = window._instItems.map((v, i) => `
+    <div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border-radius:var(--radius);padding:5px 10px;font-size:13px">
+      <span style="flex:1">${v}</span>
+      <span onclick="removeInstItem(${i})" style="cursor:pointer;color:var(--text3);font-size:12px;padding:0 4px">✕</span>
+    </div>`).join('');
+}
+
+(function() {
+  buildTabNav();
+  initSemUrlsTemp();
+  initMemUrlsTemp();
+  const loaded = loadFromStorage();
+  // 저장된 업데이트 날짜 표시
+  const savedDate = localStorage.getItem('seminar_last_updated');
+  if (savedDate) {
+    const el = document.getElementById('lastUpdatedLabel');
+    if (el) el.textContent = savedDate;
+  }
+  if (loaded) {
+    refreshFilters();
+  }
+  applyFilters();
+
+  // Sheets 연동 설정이 있으면 자동으로 불러오기
+  const cfg = getSheetsConfig();
+  if (cfg.semUrl) {
+    updateSheetsBtnState('loading');
+    loadFromSheets(false);
+  }
+  if (cfg.scheduleUrl) {
+    loadScheduleFromSheets(false);
+  }
+})();
+</script>
+</body>
+</html>
